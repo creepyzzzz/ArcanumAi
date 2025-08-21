@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   PanelGroup as ResizablePanelGroup,
   Panel as ResizablePanel,
@@ -167,6 +167,45 @@ export default function ChatPage() {
     };
   }, []);
 
+  const selectThread = useCallback(async (threadId: string) => {
+    const thread = await Database.getThread(threadId);
+    if (!thread) return;
+    setSelectedThread(thread);
+    setThreadState(threadId);
+    const [threadMessages, threadFiles] = await Promise.all([
+      Database.getThreadMessages(threadId),
+      Database.getThreadFiles(threadId)
+    ]);
+    setMessages(threadMessages);
+    setFiles(threadFiles);
+    setIsModelLockedInThread(isModelLockEnabled && threadMessages.length > 0);
+    if (thread.modelLock) {
+      setCurrentModel(thread.modelLock);
+    }
+    setChatInputText('');
+
+    if (isMobile) {
+      leftPanelRef.current?.collapse();
+    }
+  }, [isMobile, isModelLockEnabled, setThreadState]);
+
+  const createNewThread = useCallback(async () => {
+    if (selectedThread && messages.length === 0) {
+      setShowNewChatWarning(true);
+      return;
+    }
+
+    setMessages([]);
+    setFiles([]);
+
+    const newThread = await Database.createThread({
+      title: 'New Chat', createdAt: Date.now(), updatedAt: Date.now(), modelLock: currentModel, messages: [], files: []
+    });
+    setThreads(prev => [newThread, ...prev]);
+    await selectThread(newThread.id);
+    setIsModelLockedInThread(false);
+  }, [currentModel, messages.length, selectedThread, selectThread]);
+
   useEffect(() => {
     const loadData = async () => {
       const allThreads = await Database.getAllThreads();
@@ -202,7 +241,7 @@ export default function ChatPage() {
     };
 
     loadData();
-  }, [masterProviders, isMobile]);
+  }, [masterProviders, isMobile, createNewThread, selectThread, selectedThread]);
 
   const availableProviders = useMemo(() => {
     const apiKeys = Storage.getApiKeys();
@@ -251,46 +290,6 @@ export default function ChatPage() {
       }
     }
   }, [showFilesPanel]);
-
-
-  const selectThread = async (threadId: string) => {
-    const thread = await Database.getThread(threadId);
-    if (!thread) return;
-    setSelectedThread(thread);
-    setThreadState(threadId);
-    const [threadMessages, threadFiles] = await Promise.all([
-      Database.getThreadMessages(threadId),
-      Database.getThreadFiles(threadId)
-    ]);
-    setMessages(threadMessages);
-    setFiles(threadFiles);
-    setIsModelLockedInThread(isModelLockEnabled && threadMessages.length > 0);
-    if (thread.modelLock) {
-      setCurrentModel(thread.modelLock);
-    }
-    setChatInputText('');
-
-    if (isMobile) {
-      leftPanelRef.current?.collapse();
-    }
-  };
-
-  const createNewThread = async () => {
-    if (selectedThread && messages.length === 0) {
-      setShowNewChatWarning(true);
-      return;
-    }
-
-    setMessages([]);
-    setFiles([]);
-
-    const newThread = await Database.createThread({
-      title: 'New Chat', createdAt: Date.now(), updatedAt: Date.now(), modelLock: currentModel, messages: [], files: []
-    });
-    setThreads(prev => [newThread, ...prev]);
-    await selectThread(newThread.id);
-    setIsModelLockedInThread(false);
-  };
 
   const updateThreadTitle = async (threadId: string, title: string) => {
     await Database.updateThread(threadId, { title, updatedAt: Date.now() });

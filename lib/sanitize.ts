@@ -4,6 +4,7 @@ async function getDOMPurify() {
   if (DOMPurify) return DOMPurify;
   
   try {
+    // This is the correct, modern way to import the module.
     const module = await import('dompurify');
     DOMPurify = module.default;
     return DOMPurify;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -120,27 +120,28 @@ export function SettingsDialog({ providers, asIcon = false }: SettingsDialogProp
     window.dispatchEvent(new CustomEvent('api-keys-updated'));
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      loadSettings();
-    }
-  }, [isOpen]);
-
-  const loadSettings = () => {
-    setHasPassphrase(Storage.hasPassphrase());
+  const loadSettings = useCallback(() => {
+    const passphraseExists = Storage.hasPassphrase();
+    setHasPassphrase(passphraseExists);
     const prefs = Storage.getPreferences();
     setProviderModels(prefs.providerModels || {});
 
-    if (hasPassphrase && passphrase) {
+    if (passphraseExists && passphrase) {
       try {
         setApiKeys(Storage.getApiKeys(passphrase));
       } catch {
         setApiKeys({});
       }
-    } else if (!hasPassphrase) {
+    } else if (!passphraseExists) {
       setApiKeys(Storage.getApiKeys());
     }
-  };
+  }, [passphrase]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSettings();
+    }
+  }, [isOpen, loadSettings]);
 
   const saveApiKey = (provider: string, key: string) => {
     const newKeys = { ...apiKeys, [provider]: key };
