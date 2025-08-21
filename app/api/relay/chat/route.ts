@@ -39,14 +39,16 @@ export async function POST(req: NextRequest) {
   try {
     const { model, messages, attachments = [] } = await req.json();
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    // --- FIX: Updated to use the correct environment variable name ---
+    const apiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     if (!apiKey) {
-      console.error('OPENROUTER_API_KEY is not set on the server.');
+      // --- FIX: Updated the error message to match the new variable name ---
+      console.error('NEXT_PUBLIC_OPENROUTER_API_KEY is not set on the server.');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     const messagesForApi = [...messages];
-    let hasIgnoredImages = false; // --- NEW: Flag to track ignored images
+    let hasIgnoredImages = false; 
 
     if (attachments.length > 0) {
       let lastUserMessageIndex = -1;
@@ -64,7 +66,6 @@ export async function POST(req: NextRequest) {
           if ((att.type === 'text' || att.type === 'document') && att.text) {
             combinedTextContent = `Attached File: "${att.name}"\n\n---\n${att.text}\n---\n\nUser Question: ${combinedTextContent}`;
           } else if (att.type === 'image') {
-            // --- NEW: If we find an image, set the flag
             hasIgnoredImages = true;
           }
         }
@@ -91,7 +92,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (response.body) {
-      // --- NEW: Prepend a warning to the stream if images were ignored ---
       if (hasIgnoredImages) {
         const warningText = "*Note: The current model does not support image attachments, and they have been ignored.*\n\n";
         const warningStream = new ReadableStream({
@@ -101,7 +101,6 @@ export async function POST(req: NextRequest) {
           }
         });
         
-        // Create a new stream that first sends the warning, then the AI response
         const combinedStream = new ReadableStream({
           async start(controller) {
             for await (const chunk of warningStream as any) {
@@ -119,7 +118,6 @@ export async function POST(req: NextRequest) {
         });
 
       } else {
-        // If no images, just send the original AI response
         const stream = response.body.pipeThrough(createStreamParser());
         return new NextResponse(stream, {
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
