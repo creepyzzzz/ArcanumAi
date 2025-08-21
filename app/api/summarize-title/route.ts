@@ -11,9 +11,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A valid prompt string is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    // --- FIX: Updated to use the correct environment variable name ---
+    const apiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     if (!apiKey) {
-      console.error('OPENROUTER_API_KEY is not set in environment variables.');
+      // --- FIX: Updated the error message to match the new variable name ---
+      console.error('NEXT_PUBLIC_OPENROUTER_API_KEY is not set in environment variables.');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
