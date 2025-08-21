@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  /* --- UPDATE: The entire dark theme has been updated to use the new color palette --- */
+  .dark {
+    --background: 240 4% 12%;
+    --foreground: 210 40% 98%;
+    --card: 240 4% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 240 4% 12%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 240 4% 12%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/30;
+}
+
+/* Animation utilities */
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Focus visible styles */
+.focus-visible {
+  @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Message content styling */
+.message-content {
+  @apply text-sm leading-relaxed;
+}
+
+.message-content p {
+  @apply mb-2 last:mb-0;
+}
+
+.message-content pre {
+  @apply bg-muted p-3 rounded-md overflow-x-auto text-xs;
+}
+
+.message-content code {
+  @apply bg-muted px-1 py-0.5 rounded text-xs;
+}
+
+.message-content pre code {
+  @apply bg-transparent p-0;
+}
+
+.message-content blockquote {
+  @apply border-l-2 border-border pl-4 italic;
+}
+
+.message-content ul,
+.message-content ol {
+  @apply ml-4 mb-2;
+}
+
+.message-content li {
+  @apply mb-1;
+}
+
+.message-content a {
+  @apply text-primary underline hover:no-underline;
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3,
+.message-content h4,
+.message-content h5,
+.message-content h6 {
+  @apply font-semibold mb-2 mt-4 first:mt-0;
+}
+
+.message-content h1 { @apply text-xl; }
+.message-content h2 { @apply text-lg; }
+.message-content h3 { @apply text-base; }
+
+.message-content table {
+  @apply w-full border-collapse border border-border mb-2;
+}
+
+.message-content th,
+.message-content td {
+  @apply border border-border px-2 py-1 text-left;
+}
+
+.message-content th {
+  @apply bg-muted font-medium;
+}
