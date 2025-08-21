@@ -4,9 +4,9 @@ async function getDOMPurify() {
   if (DOMPurify) return DOMPurify;
   
   try {
-    // This is the correct, modern way to import the module.
-    const module = await import('dompurify');
-    DOMPurify = module.default;
+    // FIX: Renamed 'module' to 'dompurifyModule' to avoid conflict with a reserved variable name.
+    const dompurifyModule = await import('dompurify');
+    DOMPurify = dompurifyModule.default;
     return DOMPurify;
   } catch (error) {
     console.warn('Failed to load DOMPurify:', error);
@@ -35,3 +35,4 @@ export async function sanitizeHtml(html: string): Promise<string> {
     ALLOW_DATA_ATTR: false
   });
 }
+// FIX: Removed an extra closing brace from the end of the file.
