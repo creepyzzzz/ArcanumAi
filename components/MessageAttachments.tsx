@@ -67,6 +67,7 @@ export function MessageAttachments({ files }: MessageAttachmentsProps) {
 
     if (category === 'image' && content) {
       return (
+        // --- FIX: Added alt prop to the image tag ---
         <img
           src={content}
           alt={file.name}

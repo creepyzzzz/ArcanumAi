@@ -32,7 +32,8 @@ export const useThreadStore = create<ThreadStore>((set, get) => ({
       set({ threadState: existingState });
     } else {
       // If no state exists in DB, create a new one.
-      const newState: ThreadState = { threadId, docs: {} };
+      // --- FIX: Added the required 'files' property, initializing it as an empty array. ---
+      const newState: ThreadState = { threadId, docs: {}, files: [] };
       set({ threadState: newState });
       await saveThreadState(threadId, newState);
     }

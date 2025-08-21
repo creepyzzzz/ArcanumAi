@@ -95,7 +95,6 @@ export function FilesPanel({ files, onFileRemove, onFileSelect }: FilesPanelProp
 
   return (
     <div className="h-full flex flex-col">
-      {/* --- FIX: The header has been removed from this component --- */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {files.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
@@ -121,6 +120,7 @@ export function FilesPanel({ files, onFileRemove, onFileSelect }: FilesPanelProp
                     >
                       {getFileCategory(file.type) === 'image' && fileContents[file.id] && (
                         <div className="mb-2">
+                          {/* --- FIX: Added alt prop to the image tag --- */}
                           <img
                             src={fileContents[file.id]}
                             alt={file.name}
