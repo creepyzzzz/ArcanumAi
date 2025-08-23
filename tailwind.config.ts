@@ -55,6 +55,9 @@ const config: Config = {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
+      fontFamily: {
+        poppins: ['Poppins', 'sans-serif'],
+      },
   		keyframes: {
   			'accordion-down': {
   				from: {
@@ -71,11 +74,34 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+        'gradient-animation': {
+          '0%, 100%': {
+            'background-position': '0% 50%',
+          },
+          '50%': {
+            'background-position': '100% 50%',
+          },
+        },
+        // --- MODIFICATION START ---
+        // The animation now creates a slow, pulsating, and rotating effect
+        // that feels more like moving gas and less like a blink.
+        'gas-glow': {
+            '0%, 100%': { transform: 'scale(1) rotate(0deg)', opacity: '0.4' },
+            '25%': { transform: 'scale(1.1) rotate(-3deg)', opacity: '0.7' },
+            '50%': { transform: 'scale(0.95) rotate(3deg)', opacity: '0.5' },
+            '75%': { transform: 'scale(1.05) rotate(0deg)', opacity: '0.7' },
+        },
+        // --- MODIFICATION END ---
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        'gradient-animation': 'gradient-animation 16s ease infinite',
+        // --- MODIFICATION START ---
+        // The animation is now slower and smoother.
+        'gas-glow': 'gas-glow 12s ease-in-out infinite',
+        // --- MODIFICATION END ---
   		}
   	}
   },

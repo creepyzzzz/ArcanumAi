@@ -5,13 +5,20 @@ export class OpenRouterAdapter implements ProviderAdapter {
   displayName = 'OpenRouter';
   needsKey = true;
   
+  // This is the updated list of models.
+  // The ModelSelector.tsx component will read from this list.
   models = [
-    { id: 'anthropic/claude-3-opus', label: 'Claude 3 Opus' },
-    { id: 'anthropic/claude-3-sonnet', label: 'Claude 3 Sonnet' },
-    { id: 'openai/gpt-4-turbo-preview', label: 'GPT-4 Turbo' },
-    { id: 'openai/gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-    { id: 'google/gemini-pro', label: 'Gemini Pro' },
-    { id: 'mistralai/mistral-7b-instruct', label: 'Mistral 7B' },
+    // Genius Brains (Maximum Reasoning Power)
+    { id: 'meta-llama/llama-3.1-405b-instruct', label: 'Llama 3.1 405B (Genius)' },
+    { id: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (Code & Logic)' },
+
+    // Multimodal Specialists (Seeing & Analyzing)
+    { id: 'qwen/qwen-2.5-vl-72b-instruct', label: 'Qwen 2.5 VL 72B (Vision)' },
+    { id: 'google/gemini-flash-2.0-experimental', label: 'Gemini 2.0 Flash (Files)' },
+
+    // Everyday Workhorses (Speed & Tools)
+    { id: 'mistralai/mistral-nemo', label: 'Mistral Nemo (Tools)' },
+    { id: 'meta-llama/llama-3.2-3b-instruct', label: 'Llama 3.2 3B (Fast)' },
   ];
 
   async sendChat(opts: ChatOptions): Promise<{ text: string }> {
@@ -19,35 +26,52 @@ export class OpenRouterAdapter implements ProviderAdapter {
       throw new Error('API key required for OpenRouter');
     }
 
-    // Create a deep copy to avoid mutating the original messages array
     const messagesForApi = JSON.parse(JSON.stringify(opts.messages));
-    let hasIgnoredImages = false;
+    const isMultimodal = opts.model.includes('gemini-flash') || opts.model.includes('qwen-2.5-vl');
+    let hasIgnoredAttachments = false;
+    let ignoredReason = '';
 
-    if (opts.attachments && opts.attachments.length > 0) {
-      // Find the index of the last user message in a compatible way
-      let lastUserMessageIndex = -1;
-      for (let i = messagesForApi.length - 1; i >= 0; i--) {
-        if (messagesForApi[i].role === 'user') {
-          lastUserMessageIndex = i;
-          break;
-        }
-      }
-      
-      if (lastUserMessageIndex !== -1) {
-        let combinedTextContent = messagesForApi[lastUserMessageIndex].content;
-
-        for (const att of opts.attachments) {
-          if ((att.type === 'text' || att.type === 'document') && att.text) {
-            // Prepend file content and clarify the user's question
-            combinedTextContent = `Attached File: "${att.name}"\n\n---\n${att.text}\n---\n\nUser Question: ${combinedTextContent}`;
-          } else if (att.type === 'image') {
-            hasIgnoredImages = true;
-          }
-        }
-        // Securely update the content of the message object
-        messagesForApi[lastUserMessageIndex].content = combinedTextContent;
+    let lastUserMessageIndex = -1;
+    for (let i = messagesForApi.length - 1; i >= 0; i--) {
+      if (messagesForApi[i].role === 'user') {
+        lastUserMessageIndex = i;
+        break;
       }
     }
+
+    if (lastUserMessageIndex !== -1 && opts.attachments && opts.attachments.length > 0) {
+      const lastUserMessage = messagesForApi[lastUserMessageIndex];
+      let combinedTextContent = lastUserMessage.content || '';
+      const imageAttachments = [];
+
+      for (const att of opts.attachments) {
+        if (isMultimodal && att.type === 'image' && att.dataUrl) {
+          imageAttachments.push({
+            type: 'image_url',
+            image_url: {
+              url: att.dataUrl,
+            },
+          });
+        } else if ((att.type === 'text' || att.type === 'document') && att.text) {
+          combinedTextContent = `Attached File: "${att.name}"\n\n---\n${att.text}\n---\n\nUser Question: ${combinedTextContent}`;
+        } else {
+          hasIgnoredAttachments = true;
+          ignoredReason = isMultimodal 
+            ? 'Unsupported attachment type.' 
+            : 'The current model does not support image or file attachments.';
+        }
+      }
+
+      if (imageAttachments.length > 0) {
+        lastUserMessage.content = [
+          { type: 'text', text: combinedTextContent },
+          ...imageAttachments,
+        ];
+      } else {
+        lastUserMessage.content = combinedTextContent;
+      }
+    }
+
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -59,16 +83,15 @@ export class OpenRouterAdapter implements ProviderAdapter {
       },
       body: JSON.stringify({
         model: opts.model,
-        messages: messagesForApi.map((msg: ChatMessage) => ({
-          role: msg.role,
-          content: msg.content
-        })),
+        messages: messagesForApi,
         stream: !!opts.stream
       }),
       signal: opts.signal
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('OpenRouter API Error:', errorBody);
       throw new Error(`OpenRouter API error: ${response.statusText}`);
     }
 
@@ -78,19 +101,23 @@ export class OpenRouterAdapter implements ProviderAdapter {
       let fullText = '';
       let warningSent = false;
 
+      const sendWarning = () => {
+        if (hasIgnoredAttachments && !warningSent) {
+          const warningText = `*Note: ${ignoredReason}*\n\n`;
+          opts.stream?.(warningText);
+          fullText += warningText;
+          warningSent = true;
+        }
+      };
+
+      sendWarning();
+
       try {
         while (true) {
-          if (hasIgnoredImages && !warningSent) {
-            const warningText = "*Note: The current model does not support image attachments, and they have been ignored.*\n\n";
-            opts.stream(warningText);
-            fullText += warningText;
-            warningSent = true;
-          }
-
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
+          const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split('\n');
           
           for (const line of lines) {
@@ -120,8 +147,8 @@ export class OpenRouterAdapter implements ProviderAdapter {
       const data = await response.json();
       let responseText = data.choices?.[0]?.message?.content || 'No response';
       
-      if (hasIgnoredImages) {
-        responseText = `*Note: The current model does not support image attachments, and they have been ignored.*\n\n` + responseText;
+      if (hasIgnoredAttachments) {
+        responseText = `*Note: ${ignoredReason}*\n\n` + responseText;
       }
       
       return { text: responseText };

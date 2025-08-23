@@ -15,12 +15,26 @@ import { Storage } from '@/lib/storage';
 import { ProviderAdapter } from '@/lib/providers/base';
 import { ChevronDown, Settings, AlertCircle, Loader2 } from 'lucide-react';
 
+const openRouterModelGroups = [
+  {
+    label: 'Genius Brains',
+    models: ['meta-llama/llama-3.1-405b-instruct', 'qwen/qwen-2.5-72b-instruct']
+  },
+  {
+    label: 'Multimodal Specialists',
+    models: ['qwen/qwen-2.5-vl-72b-instruct', 'google/gemini-flash-2.0-experimental']
+  },
+  {
+    label: 'Everyday Workhorses',
+    models: ['mistralai/mistral-nemo', 'meta-llama/llama-3.2-3b-instruct']
+  }
+];
+
 interface ModelSelectorProps {
   providers: ProviderAdapter[];
   selectedModel: string;
   onModelChange: (modelId: string) => void;
   disabled?: boolean;
-  // --- NEW: Prop for summarization loading state ---
   isSummarizing?: boolean;
 }
 
@@ -29,7 +43,6 @@ export function ModelSelector({
   selectedModel,
   onModelChange,
   disabled = false,
-  // --- NEW: Destructure summarization prop ---
   isSummarizing = false,
 }: ModelSelectorProps) {
   const [showMissingKeyWarning, setShowMissingKeyWarning] = useState(false);
@@ -65,15 +78,6 @@ export function ModelSelector({
     onModelChange(newModelId);
     setShowMissingKeyWarning(false);
   };
-
-  const groupedModels = providers.reduce((acc, provider) => {
-    acc[provider.displayName] = provider.models.map(model => ({
-      ...model,
-      fullId: `${provider.id}:${model.id}`,
-      needsKey: provider.needsKey
-    }));
-    return acc;
-  }, {} as Record<string, Array<{ id: string; label: string; fullId: string; needsKey: boolean }>>);
   
   const apiKeys = Storage.getApiKeys();
 
@@ -81,42 +85,101 @@ export function ModelSelector({
     <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {/* --- UPDATE: Show loading spinner when summarizing --- */}
-          <Button variant="outline" size="sm" className="gap-2 min-w-48" disabled={disabled || isSummarizing}>
-            <span className="truncate">{selectedModelName}</span>
+          {/* --- MODIFICATION START --- */}
+          {/* Further compacted the button for mobile screens */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 h-8 px-2 rounded-full shadow-none border-0 bg-muted hover:bg-muted/80 text-muted-foreground"
+            disabled={disabled || isSummarizing}
+          >
+            <span className="truncate text-xs max-w-[70px] sm:max-w-28">{selectedModelName}</span>
             {isSummarizing ? (
-              <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+              <Loader2 className="h-3 w-3 flex-shrink-0 animate-spin" />
             ) : (
-              <ChevronDown className="h-4 w-4 flex-shrink-0" />
+              <ChevronDown className="h-3 w-3 flex-shrink-0" />
             )}
           </Button>
+          {/* --- MODIFICATION END --- */}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
-          {Object.entries(groupedModels).map(([providerName, models]) => (
-            <div key={providerName}>
-              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                {providerName}
-              </DropdownMenuLabel>
-              {models.map((model) => {
-                const hasKey = !model.needsKey || !!apiKeys[model.fullId.split(':')[0]];
-                
-                return (
+        
+        <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
+          {providers.map((provider, providerIndex) => {
+            const hasKeyForProvider = !provider.needsKey || !!apiKeys[provider.id];
+
+            if (provider.id === 'openrouter') {
+              const allGroupedModels = new Set(openRouterModelGroups.flatMap(g => g.models));
+              const ungroupedModels = provider.models.filter(m => !allGroupedModels.has(m.id));
+
+              return (
+                <div key={provider.id}>
+                  {openRouterModelGroups.map((group) => {
+                    const modelsInGroup = group.models
+                      .map(modelId => provider.models.find(m => m.id === modelId))
+                      .filter((m): m is NonNullable<typeof m> => !!m);
+
+                    if (modelsInGroup.length === 0) return null;
+
+                    return (
+                      <div key={group.label}>
+                        <DropdownMenuLabel className="text-xs font-medium text-muted-foreground px-2 pt-1.5">
+                          {group.label}
+                        </DropdownMenuLabel>
+                        {modelsInGroup.map((model) => (
+                          <DropdownMenuItem
+                            key={`${provider.id}:${model.id}`}
+                            onClick={() => handleModelSelect(`${provider.id}:${model.id}`)}
+                            className="flex items-center justify-between"
+                            disabled={!hasKeyForProvider}
+                          >
+                            <span className="truncate">{model.label}</span>
+                             {!hasKeyForProvider && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  {ungroupedModels.length > 0 && (
+                     <>
+                      <DropdownMenuSeparator />
+                       {ungroupedModels.map(model => (
+                         <DropdownMenuItem
+                           key={`${provider.id}:${model.id}`}
+                           onClick={() => handleModelSelect(`${provider.id}:${model.id}`)}
+                           className="flex items-center justify-between"
+                           disabled={!hasKeyForProvider}
+                         >
+                           <span className="truncate">{model.label}</span>
+                           {!hasKeyForProvider && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+                         </DropdownMenuItem>
+                       ))}
+                     </>
+                  )}
+                  {providerIndex < providers.length - 1 && <DropdownMenuSeparator className="my-1" />}
+                </div>
+              );
+            }
+
+            return (
+              <div key={provider.id}>
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                  {provider.displayName}
+                </DropdownMenuLabel>
+                {provider.models.map((model) => (
                   <DropdownMenuItem
-                    key={model.fullId}
-                    onClick={() => handleModelSelect(model.fullId)}
-                    className={`flex items-center justify-between ${
-                      !hasKey ? 'text-muted-foreground' : ''
-                    }`}
-                    disabled={!hasKey}
+                    key={`${provider.id}:${model.id}`}
+                    onClick={() => handleModelSelect(`${provider.id}:${model.id}`)}
+                    className="flex items-center justify-between"
+                    disabled={!hasKeyForProvider}
                   >
                     <span className="truncate">{model.label}</span>
-                    {!hasKey && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+                    {!hasKeyForProvider && <AlertCircle className="h-4 w-4 text-yellow-500" />}
                   </DropdownMenuItem>
-                );
-              })}
-              <DropdownMenuSeparator />
-            </div>
-          ))}
+                ))}
+                {providerIndex < providers.length - 1 && <DropdownMenuSeparator className="my-1" />}
+              </div>
+            );
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
 

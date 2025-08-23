@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -31,7 +33,6 @@
     --chart-5: 27 87% 67%;
   }
 
-  /* --- UPDATE: The entire dark theme has been updated to use the new color palette --- */
   .dark {
     --background: 240 4% 12%;
     --foreground: 210 40% 98%;
@@ -64,7 +65,19 @@
   }
 }
 
-/* Custom scrollbar */
+/* --- MODIFICATION START --- */
+/* Added the utility for the background glow effect. */
+@layer utilities {
+  .bg-gradient-glow {
+    background-image: radial-gradient(circle at center, 
+      hsl(0, 84.2%, 60.2%) 0%, 
+      transparent 70%
+    );
+    filter: blur(80px);
+  }
+}
+/* --- MODIFICATION END --- */
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -81,7 +94,6 @@
   @apply bg-muted-foreground/30;
 }
 
-/* Animation utilities */
 .animate-pulse-subtle {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -95,12 +107,10 @@
   }
 }
 
-/* Focus visible styles */
 .focus-visible {
   @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -112,7 +122,6 @@
   }
 }
 
-/* Message content styling */
 .message-content {
   @apply text-sm leading-relaxed;
 }

@@ -39,10 +39,8 @@ export async function POST(req: NextRequest) {
   try {
     const { model, messages, attachments = [] } = await req.json();
 
-    // --- FIX: Updated to use the correct environment variable name ---
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      // --- FIX: Updated the error message to match the new variable name ---
       console.error('OPENROUTER_API_KEY is not set on the server.');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
@@ -73,6 +71,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // --- MODIFICATION START ---
+    // The logic for determining the model ID has been updated.
+    // It now correctly handles both the original Mistral model and the new,
+    // fully-qualified model IDs (e.g., 'meta-llama/llama-3.1-405b-instruct').
+    const finalModelId = model === 'mistral-7b-instruct'
+      ? `mistralai/${model}:free`
+      : model;
+    // --- MODIFICATION END ---
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -80,7 +87,8 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: `mistralai/${model}:free`,
+        // Use the corrected model ID in the API request.
+        model: finalModelId,
         messages: messagesForApi,
         stream: true,
       }),

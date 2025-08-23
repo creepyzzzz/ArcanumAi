@@ -15,20 +15,15 @@ export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanva
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
 
-  // --- UPDATE: This logic now intelligently handles auto-scrolling ---
-
-  // Before the component updates with new messages, we check the scroll position.
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
     if (scrollEl) {
-      // We consider the user "at the bottom" if they are within 100 pixels of it.
       const threshold = 100;
       const isAtBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight < threshold;
       isAtBottomRef.current = isAtBottom;
     }
   }, [messages]);
 
-  // After new messages are rendered, we scroll down only if the user was already at the bottom.
   useEffect(() => {
     const scrollEl = scrollRef.current;
     if (scrollEl && isAtBottomRef.current) {
@@ -39,29 +34,14 @@ export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanva
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center text-muted-foreground max-w-md">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-            <svg
-              className="w-8 h-8 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
-          <p className="text-sm">
-            Ask me anything or upload files to get started. I can help you with coding, writing, analysis, and more.
-          </p>
-        </div>
+      // --- MODIFICATION START ---
+      // Removed the animated glow div and changed the gradient to a medium red.
+      <div className="relative flex flex-col items-center justify-center h-full text-center overflow-hidden">
+        <h1 className="text-5xl md:text-7xl font-bold font-poppins text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-white bg-[200%_auto] animate-gradient-animation">
+          Arcanum
+        </h1>
       </div>
+      // --- MODIFICATION END ---
     );
   }
 

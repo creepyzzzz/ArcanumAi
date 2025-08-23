@@ -7,8 +7,6 @@ import { ModelSelector } from '@/components/ModelSelector';
 import { SpeechService, WaveformVisualizer } from '../lib/speech';
 import { MAX_FILE_COUNT, formatFileSize } from '../lib/file-utils';
 import { ProviderAdapter } from '../lib/providers/base';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import {
   Plus,
   Send,
@@ -20,8 +18,6 @@ import {
   Square,
   Code,
   Paperclip,
-  Lock,
-  Unlock,
   Sparkles,
   Loader2,
 } from 'lucide-react';
@@ -41,9 +37,6 @@ interface ChatInputProps {
   currentModel: string;
   onModelChange: (modelId: string) => void;
   providers: ProviderAdapter[];
-  isModelLockEnabled: boolean;
-  isModelLockedInThread: boolean;
-  onModelLockChange: (enabled: boolean) => void;
   text: string;
   onTextChange: (text: string | ((prevText: string) => string)) => void;
   onEnhancePrompt: () => void;
@@ -59,9 +52,6 @@ export function ChatInput({
   currentModel,
   onModelChange,
   providers,
-  isModelLockEnabled,
-  isModelLockedInThread,
-  onModelLockChange,
   text,
   onTextChange,
   onEnhancePrompt,
@@ -118,16 +108,12 @@ export function ChatInput({
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-        // Reset height to auto to allow the textarea to shrink if text is deleted
         textarea.style.height = 'auto';
-        // Set the height to the scrollHeight to fit the content
         textarea.style.height = `${textarea.scrollHeight}px`;
-        // Ensure the cursor is visible when typing
         textarea.scrollTop = textarea.scrollHeight;
     }
   }, [displayText]);
 
-  // Robust scroll-into-view logic for mobile keyboard
   useEffect(() => {
     const handleResize = () => {
       if (isFocusedRef.current && window.innerWidth < 768) {
@@ -252,14 +238,12 @@ export function ChatInput({
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
-    if (file.type.startsWith('text/')) {
-      return <FileText className="h-4 w-4" />;
-    }
+    if (file.type.startsWith('text/')) return <FileText className="h-4 w-4" />;
     return <FileIcon className="h-4 w-4" />;
   };
 
   return (
-    <div ref={chatInputRef} className="mx-auto w-full max-w-4xl px-4">
+    <div ref={chatInputRef} className="mx-auto w-full max-w-4xl px-4 py-2">
       {attachedFiles.length > 0 && (
         <div className="mb-2">
           <div className="flex flex-wrap gap-2">
@@ -287,175 +271,160 @@ export function ChatInput({
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div
-          className={`relative border-2 bg-background rounded-3xl shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-white/15 transition-all duration-300 flex flex-col focus-within:border-primary ${
-            isDragging ? 'border-primary bg-primary/5' : 'border-border/50'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          {/* This grid structure is the key to the reliable boundary */}
-          <div className="relative grid grid-cols-1 grid-rows-1">
-            <Textarea
-              ref={textareaRef}
-              value={displayText}
-              onChange={(e) => {
-                onTextChange(e.target.value);
-                setInterimTranscript('');
-              }}
-              onKeyDown={handleKeyDown}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder="What do you want to build?"
-              disabled={isStreaming}
-              style={{ maxHeight: '40vh' }}
-              className={`col-start-1 row-start-1 w-full text-base overflow-y-auto resize-none border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent rounded-t-3xl transition-all duration-300 pt-4 pb-10 pl-4 pr-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
-                interimTranscript ? 'text-muted-foreground' : ''
-              }`}
-            />
-            
-            <div className="col-start-1 row-start-1 self-end h-12 flex items-center gap-1 px-3 pointer-events-none">
-                <div className="relative pointer-events-auto">
-                    <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowOptions(prev => !prev)}
-                    disabled={isStreaming}
-                    className="h-9 w-9"
-                    >
-                    <Plus className={`h-5 w-5 transition-transform duration-200 ${showOptions ? 'rotate-45' : ''}`} />
-                    </Button>
-                    <AnimatePresence>
-                    {showOptions && (
-                        <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute bottom-full mb-2 flex flex-col gap-2"
-                        >
-                        <Button type="button" className="gap-2" onClick={toggleCanvasMode}>
-                            <Code className="h-4 w-4" />
-                            Canvas
-                        </Button>
-                        <Button type="button" className="gap-2" onClick={() => fileInputRef.current?.click()}>
-                            <Paperclip className="h-4 w-4" />
-                            File
-                        </Button>
-                        </motion.div>
-                    )}
-                    </AnimatePresence>
-                </div>
-
-                <div className="ml-auto flex items-center gap-1 pointer-events-auto">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={onEnhancePrompt}
-                            disabled={!text.trim() || isEnhancing || isStreaming}
-                            className="h-9 w-9"
-                          >
-                            {isEnhancing ? (
-                              <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                              <Sparkles className="h-5 w-5" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Enhance Prompt</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                    {isClient && SpeechService.isSupported() && (
-                        <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div
-                            onClick={toggleSpeech}
-                            className={`h-9 w-9 rounded-full flex items-center justify-center cursor-pointer transition-colors ${ isStreaming ? 'cursor-not-allowed' : isListening ? 'bg-red-500/10' : 'hover:bg-muted'}`}
-                            >
-                            {isListening ? (
-                                <canvas
-                                    ref={canvasRef}
-                                    width="20"
-                                    height="20"
-                                />
-                            ) : (
-                                <Mic className="h-5 w-5" />
-                            )}
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            {isListening ? 'Stop recording' : 'Start recording'}
-                          </p>
-                        </TooltipContent>
-                        </Tooltip>
-                    )}
-                    </TooltipProvider>
-
-                    {isStreaming ? (
-                    <TooltipProvider>
-                        <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                            type="button"
-                            size="icon"
-                            onClick={onStopGenerating}
-                            className="h-9 w-9 bg-destructive text-destructive-foreground rounded-full"
-                            >
-                            <Square className="h-5 w-5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Stop generating</p>
-                        </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    ) : (
-                    <Button
-                        type="submit"
-                        size="icon"
-                        disabled={!canSend}
-                        className="h-9 w-9 bg-primary text-primary-foreground rounded-full"
-                    >
-                        <Send className="h-5 w-5" />
-                    </Button>
-                    )}
-                </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2 px-3 py-2 border-t mt-auto">
-            <div className={`text-xs md:text-sm border bg-background rounded-xl shadow-sm hover:bg-muted/50 transition-colors border-border/50 ${isModelLockedInThread ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <ModelSelector
-                providers={providers}
-                selectedModel={currentModel}
-                onModelChange={onModelChange}
-                disabled={isModelLockedInThread}
-                isSummarizing={isSummarizing}
-              />
-            </div>
-            <div className="flex items-center space-x-1 md:space-x-2">
-              <div className="transform scale-75 md:scale-100 origin-right">
-                  <Switch
-                    id="model-lock-switch"
-                    checked={isModelLockEnabled}
-                    onCheckedChange={onModelLockChange}
+      <form
+        onSubmit={handleSubmit}
+        className={`relative border-2 bg-background rounded-3xl shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-white/15 transition-all duration-300 flex flex-col focus-within:border-primary ${
+          isDragging ? 'border-primary bg-primary/5' : 'border-border/50'
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="relative grid grid-cols-1 grid-rows-1">
+          <Textarea
+            ref={textareaRef}
+            value={displayText}
+            onChange={(e) => {
+              onTextChange(e.target.value);
+              setInterimTranscript('');
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder="What do you want to build?"
+            disabled={isStreaming}
+            style={{ maxHeight: '40vh' }}
+            className={`col-start-1 row-start-1 w-full text-base overflow-y-auto resize-none border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent rounded-t-3xl transition-all duration-300 pt-4 pb-10 pl-4 pr-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+              interimTranscript ? 'text-muted-foreground' : ''
+            }`}
+          />
+          
+          <div className="col-start-1 row-start-1 self-end h-12 flex items-center gap-1 px-3 pointer-events-none">
+              <div className="relative pointer-events-auto flex items-center gap-1">
+                  <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowOptions(prev => !prev)}
+                  disabled={isStreaming}
+                  className="h-9 w-9"
+                  >
+                  <Plus className={`h-5 w-5 transition-transform duration-200 ${showOptions ? 'rotate-45' : ''}`} />
+                  </Button>
+                  <AnimatePresence>
+                  {showOptions && (
+                      <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute bottom-full mb-2 flex flex-col gap-2"
+                      >
+                      <Button type="button" className="gap-2" onClick={toggleCanvasMode}>
+                          <Code className="h-4 w-4" />
+                          Canvas
+                      </Button>
+                      <Button type="button" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+                          <Paperclip className="h-4 w-4" />
+                          File
+                      </Button>
+                      </motion.div>
+                  )}
+                  </AnimatePresence>
+                  
+                  {/* --- MODIFICATION START --- */}
+                  {/* ModelSelector moved inside the input box */}
+                  <ModelSelector
+                    providers={providers}
+                    selectedModel={currentModel}
+                    onModelChange={onModelChange}
+                    disabled={isStreaming || isSummarizing}
+                    isSummarizing={isSummarizing}
                   />
+                  {/* --- MODIFICATION END --- */}
               </div>
-              <Label htmlFor="model-lock-switch" className="flex items-center gap-1 text-xs text-muted-foreground -ml-2 md:ml-0">
-                {isModelLockEnabled ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-                <span className="hidden sm:inline">Lock Model</span>
-              </Label>
-            </div>
+
+              <div className="ml-auto flex items-center gap-1 pointer-events-auto">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={onEnhancePrompt}
+                          disabled={!text.trim() || isEnhancing || isStreaming}
+                          className="h-9 w-9"
+                        >
+                          {isEnhancing ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-5 w-5" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Enhance Prompt</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                  {isClient && SpeechService.isSupported() && (
+                      <Tooltip>
+                      <TooltipTrigger asChild>
+                          <div
+                          onClick={toggleSpeech}
+                          className={`h-9 w-9 rounded-full flex items-center justify-center cursor-pointer transition-colors ${ isStreaming ? 'cursor-not-allowed' : isListening ? 'bg-red-500/10' : 'hover:bg-muted'}`}
+                          >
+                          {isListening ? (
+                              <canvas
+                                  ref={canvasRef}
+                                  width="20"
+                                  height="20"
+                              />
+                          ) : (
+                              <Mic className="h-5 w-5" />
+                          )}
+                          </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {isListening ? 'Stop recording' : 'Start recording'}
+                        </p>
+                      </TooltipContent>
+                      </Tooltip>
+                  )}
+                  </TooltipProvider>
+
+                  {isStreaming ? (
+                  <TooltipProvider>
+                      <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button
+                          type="button"
+                          size="icon"
+                          onClick={onStopGenerating}
+                          className="h-9 w-9 bg-destructive text-destructive-foreground rounded-full"
+                          >
+                          <Square className="h-5 w-5" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Stop generating</p>
+                      </TooltipContent>
+                      </Tooltip>
+                  </TooltipProvider>
+                  ) : (
+                  <Button
+                      type="submit"
+                      size="icon"
+                      disabled={!canSend}
+                      className="h-9 w-9 bg-primary text-primary-foreground rounded-full"
+                  >
+                      <Send className="h-5 w-5" />
+                  </Button>
+                  )}
+              </div>
           </div>
         </div>
       </form>

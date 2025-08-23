@@ -23,7 +23,6 @@ import { AnthropicAdapter } from '@/lib/providers/anthropic';
 import { GeminiAdapter } from '@/lib/providers/gemini';
 import { MistralAdapter } from '@/lib/providers/mistral';
 import { GroqAdapter } from '@/lib/providers/groq';
-import { MockEchoAdapter } from '@/lib/providers/mock-echo';
 import { BuiltInAdapter } from '@/lib/providers/builtin';
 import { ProviderAdapter, ChatOptions } from '@/lib/providers/base';
 import { useThreadStore } from '@/lib/state/threadStore';
@@ -88,7 +87,6 @@ const defaultProviders: ProviderAdapter[] = [
   new GeminiAdapter(),
   new MistralAdapter(),
   new GroqAdapter(),
-  new MockEchoAdapter(),
 ];
 
 const defaultModel = 'builtin:mistral-7b-instruct';
@@ -106,9 +104,6 @@ export default function ChatPage() {
   const [providerModels, setProviderModels] = useState<{ [key: string]: string[] }>({});
   const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
   const [masterProviders, setMasterProviders] = useState<ProviderAdapter[]>(defaultProviders);
-
-  const [isModelLockEnabled, setIsModelLockEnabled] = useState(true);
-  const [isModelLockedInThread, setIsModelLockedInThread] = useState(false);
 
   const [chatInputText, setChatInputText] = useState('');
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -178,7 +173,7 @@ export default function ChatPage() {
     ]);
     setMessages(threadMessages);
     setFiles(threadFiles);
-    setIsModelLockedInThread(isModelLockEnabled && threadMessages.length > 0);
+
     if (thread.modelLock) {
       setCurrentModel(thread.modelLock);
     }
@@ -187,7 +182,7 @@ export default function ChatPage() {
     if (isMobile) {
       leftPanelRef.current?.collapse();
     }
-  }, [isMobile, isModelLockEnabled, setThreadState]);
+  }, [isMobile, setThreadState]);
 
   const createNewThread = useCallback(async () => {
     if (selectedThread && messages.length === 0) {
@@ -203,7 +198,6 @@ export default function ChatPage() {
     });
     setThreads(prev => [newThread, ...prev]);
     await selectThread(newThread.id);
-    setIsModelLockedInThread(false);
   }, [currentModel, messages.length, selectedThread, selectThread]);
 
   useEffect(() => {
@@ -248,7 +242,7 @@ export default function ChatPage() {
     const hasAnyPreferences = Object.values(providerModels).some(models => models.length > 0);
 
     const activeProviders = masterProviders.filter(provider => {
-        if (provider.id === 'builtin' || provider.id === 'mock-echo' || provider.id === 'custom') {
+        if (provider.id === 'builtin' || provider.id === 'custom') {
             return true;
         }
         if (!provider.needsKey) {
@@ -431,10 +425,6 @@ export default function ChatPage() {
 
     if (messages.length === 0) {
         isNewChat = true;
-    }
-
-    if (isNewChat && isModelLockEnabled) {
-      setIsModelLockedInThread(true);
     }
 
     const userMessage = await Database.createMessage({
@@ -768,7 +758,7 @@ export default function ChatPage() {
       Database.updateThread(selectedThread.id, { modelLock: modelId });
     }
 
-    if (!isModelLockedInThread && messages.length > 0) {
+    if (messages.length > 0) {
       setIsSummarizing(true);
       try {
         const response = await fetch('/api/summarize', {
@@ -862,7 +852,7 @@ export default function ChatPage() {
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={showFilesPanel ? 80 : 100} minSize={30}>
               <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel defaultSize={isCanvasOpen ? 50 : 100} minSize={30}>
+                <ResizablePanel defaultSize={isCanvasOpen ? 50 : 100} minSize={30} style={{ overflow: 'visible' }}>
                   <div className="flex flex-col h-full">
                     <TopBar
                       showFilesPanel={showFilesPanel}
@@ -877,6 +867,8 @@ export default function ChatPage() {
                         onOpenFileInCanvas={handleOpenFileInCanvas}
                       />
                     </div>
+                    {/* --- MODIFICATION START --- */}
+                    {/* Removed the unnecessary properties from the ChatInput component */}
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onFileUpload={handleFileUpload}
@@ -885,16 +877,13 @@ export default function ChatPage() {
                       currentModel={currentModel}
                       onModelChange={handleModelChange}
                       providers={availableProviders}
-                      isModelLockEnabled={isModelLockEnabled}
-
-                      isModelLockedInThread={isModelLockedInThread}
-                      onModelLockChange={setIsModelLockEnabled}
                       text={chatInputText}
                       onTextChange={setChatInputText}
                       onEnhancePrompt={handleEnhancePrompt}
                       isEnhancing={isEnhancing}
                       isSummarizing={isSummarizing}
                     />
+                    {/* --- MODIFICATION END --- */}
                   </div>
                 </ResizablePanel>
                 {isCanvasOpen && !isMobile && (
