@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { FileRef } from '@/types';
 import { Database } from '@/lib/db';
 import { getFileCategory, formatFileSize } from '@/lib/file-utils';
-import { FileText, Image, FileIcon, Eye } from 'lucide-react';
-import { Button } from './ui/button';
+import { FileText, Image, FileIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -67,7 +66,6 @@ export function MessageAttachments({ files }: MessageAttachmentsProps) {
 
     if (category === 'image' && content) {
       return (
-        // --- FIX: Added alt prop to the image tag ---
         <img
           src={content}
           alt={file.name}
@@ -88,6 +86,7 @@ export function MessageAttachments({ files }: MessageAttachmentsProps) {
       <div className="p-8 text-center text-muted-foreground">
         <FileIcon className="h-12 w-12 mx-auto mb-2" />
         <p>Preview not available</p>
+        <p className="text-sm mt-2">{formatFileSize(file.size)}</p>
       </div>
     );
   };
@@ -95,37 +94,32 @@ export function MessageAttachments({ files }: MessageAttachmentsProps) {
   if (files.length === 0) return null;
 
   return (
-    <div className="mb-3 space-y-2">
+    <div className="mb-2 flex flex-wrap gap-2">
       {files.map((file) => (
-        <div
-          key={file.id}
-          className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg border"
-        >
-          <div className="flex-shrink-0">
-            {getFileIcon(file)}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{file.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {formatFileSize(file.size)}
-            </p>
-          </div>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex-shrink-0">
-                <Eye className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
-              <DialogHeader>
-                <DialogTitle>{file.name}</DialogTitle>
-              </DialogHeader>
-              <FilePreview file={file} />
-            </DialogContent>
-          </Dialog>
-        </div>
+        // --- MODIFICATION START ---
+        // Redesigned the file attachment into a compact, clickable "chip".
+        // The entire element is now the trigger for the preview dialog.
+        <Dialog key={file.id}>
+          <DialogTrigger asChild>
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border max-w-[250px] sm:max-w-xs cursor-pointer hover:bg-muted/75 transition-colors"
+            >
+              <div className="flex-shrink-0 text-muted-foreground">
+                {getFileIcon(file)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+              </div>
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="truncate">{file.name}</DialogTitle>
+            </DialogHeader>
+            <FilePreview file={file} />
+          </DialogContent>
+        </Dialog>
+        // --- MODIFICATION END ---
       ))}
     </div>
   );

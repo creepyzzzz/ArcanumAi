@@ -72,12 +72,11 @@ export async function POST(req: NextRequest) {
     }
 
     // --- MODIFICATION START ---
-    // The logic for determining the model ID has been updated.
-    // It now correctly handles both the original Mistral model and the new,
-    // fully-qualified model IDs (e.g., 'meta-llama/llama-3.1-405b-instruct').
-    const finalModelId = model === 'mistral-7b-instruct'
-      ? `mistralai/${model}:free`
-      : model;
+    // All special logic for handling free-tier models has been removed.
+    // The model ID is now passed directly to the API without any changes.
+    // This correctly handles all models, and the API will determine
+    // if payment is required based on the user's account.
+    const finalModelId = model;
     // --- MODIFICATION END ---
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -87,7 +86,6 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        // Use the corrected model ID in the API request.
         model: finalModelId,
         messages: messagesForApi,
         stream: true,

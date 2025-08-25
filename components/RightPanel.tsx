@@ -5,6 +5,7 @@ import { FileRef, Message } from '@/types';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useUiStore } from '@/lib/state/uiStore'; // Import the UI store
 
 interface RightPanelProps {
   files: FileRef[];
@@ -23,6 +24,8 @@ export function RightPanel({
   showFilesPanel,
   onClose,
 }: RightPanelProps) {
+  const { fontSizes } = useUiStore(); // Get font sizes from the store
+
   return (
     <motion.div
       initial={{ x: '100%' }}
@@ -30,6 +33,7 @@ export function RightPanel({
       exit={{ x: '100%' }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="absolute top-0 right-0 h-full w-4/5 max-w-sm z-30 bg-background md:relative md:h-full md:w-auto md:max-w-none md:border-l flex flex-col"
+      style={{ fontSize: fontSizes.general }}
     >
       {/* --- FIX: Unified header with close button for all screen sizes --- */}
       <div className="flex items-center justify-between p-4 border-b">

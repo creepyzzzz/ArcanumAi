@@ -30,6 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+import { useUiStore } from '@/lib/state/uiStore'; // Import the UI store
 
 
 interface LeftSidebarProps {
@@ -67,6 +68,7 @@ export function LeftSidebar({
   const [editTitle, setEditTitle] = useState('');
   const [isHovered, setIsHovered] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const { fontSizes } = useUiStore(); // Get font sizes from the store
 
   useEffect(() => {
     if (editingThreadId && editInputRef.current) {
@@ -121,6 +123,7 @@ export function LeftSidebar({
         className="flex flex-col h-full items-center justify-between py-4 relative bg-muted/10 border-r"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={{ fontSize: fontSizes.general }}
       >
         <TooltipProvider delayDuration={0}>
           {/* Top section with expand and new chat buttons */}
@@ -166,7 +169,7 @@ export function LeftSidebar({
 
   // --- EXPANDED VIEW ---
   return (
-    <div className="flex flex-col h-full bg-muted/10 border-r">
+    <div className="flex flex-col h-full bg-muted/10 border-r" style={{ fontSize: fontSizes.general }}>
       <div className="p-4 space-y-3 border-b">
         <div className="flex items-center justify-between">
            <h1 className="text-lg font-semibold">Chats</h1>

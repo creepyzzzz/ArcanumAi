@@ -21,7 +21,7 @@ export interface Message {
   threadId: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  text?: string; // <-- FIX: Added missing optional text property
+  text?: string;
   createdAt: number;
   attachments?: Attachment[];
   attachmentIds?: string[];
@@ -31,7 +31,6 @@ export interface Message {
 
 /**
  * Represents a reference to a file stored in IndexedDB.
- * This is our main persistence type for files.
  */
 export interface FileRef {
   id: string;
@@ -40,12 +39,10 @@ export interface FileRef {
   type: string; // The MIME type
   size: number;
   createdAt: number;
-  // NEW: Store extracted text content for reuse.
   extractedText?: string;
-  // NEW: Store the base64 data URL for images.
   dataUrl?: string;
-  thumbUrl?: string; // For image thumbnails
-  textSnippet?: string; // For text file previews
+  thumbUrl?: string;
+  textSnippet?: string;
 }
 
 /**
@@ -55,19 +52,18 @@ export interface FileRef {
 export interface Attachment {
   id: string;
   name: string;
-  // NEW: More specific category for easier handling
   type: 'text' | 'image' | 'document' | 'unknown';
   mime_type: string;
   source: 'upload' | 'paste';
-  // The actual content to be sent to the model
   text?: string;
-  dataUrl?: string; // base64 data URL for images
+  dataUrl?: string;
 }
 
-// Canvas-related types
+// --- MODIFICATION START ---
+// Added 'pdf' to the list of valid document kinds.
 export interface DocMeta {
   id: string;
-  kind: 'document' | 'code';
+  kind: 'document' | 'code' | 'pdf';
   name: string;
   content: string;
   createdAt: number;
@@ -75,6 +71,7 @@ export interface DocMeta {
   history: { ts: number; content: string }[];
   language?: string;
 }
+// --- MODIFICATION END ---
 
 export interface ThreadState {
   threadId: string;

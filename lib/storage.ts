@@ -6,6 +6,15 @@ export interface KeyVault {
   [provider: string]: ApiKey;
 }
 
+export interface FontSizes {
+  general: number;
+  chat: number;
+  code: number;
+  canvas: number;
+  canvasCodePreview: number;
+  canvasCodeEditor: number;
+}
+
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
   selectedModel: string;
@@ -14,6 +23,7 @@ export interface UserPreferences {
   providerModels: { [providerId: string]: string[] };
   isLeftSidebarCollapsed: boolean;
   isRightSidebarCollapsed: boolean;
+  fontSizes: FontSizes;
 }
 
 export class Storage {
@@ -68,7 +78,6 @@ export class Storage {
       dataToStore = keys;
     }
     localStorage.setItem(`${STORAGE_PREFIX}keys`, JSON.stringify(dataToStore));
-    // --- FIX: Dispatch event after keys are set ---
     window.dispatchEvent(new CustomEvent('api-keys-updated'));
   }
 
@@ -91,10 +100,29 @@ export class Storage {
       providerModels: {},
       isLeftSidebarCollapsed: false,
       isRightSidebarCollapsed: false,
+      fontSizes: {
+        general: 16,
+        chat: 14,
+        code: 14,
+        canvas: 16,
+        canvasCodePreview: 14,
+        canvasCodeEditor: 14,
+      },
     };
     try {
       const stored = localStorage.getItem(`${STORAGE_PREFIX}prefs`);
-      return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return {
+          ...defaults,
+          ...parsed,
+          fontSizes: {
+            ...defaults.fontSizes,
+            ...(parsed.fontSizes || {}),
+          },
+        };
+      }
+      return defaults;
     } catch {
       return defaults;
     }
@@ -115,7 +143,6 @@ export class Storage {
     return JSON.stringify(keysToExport, null, 2);
   }
 
-  // --- FIX: Updated import function to correctly parse Python snippets ---
   static importKeys(content: string, format: 'auto' | 'json' | 'curl' | 'python' | 'nodejs' = 'auto'): KeyVault {
     if (format === 'auto') {
         const trimmed = content.trim();
@@ -151,7 +178,6 @@ export class Storage {
             const keyMatch = content.match(/api_key="([^"]+)"/);
             const urlMatch = content.match(/base_url="([^"]+)"/);
             
-            // Extract all parameters from the completions.create call
             const modelMatch = content.match(/model="([^"]+)"/);
             const maxTokensMatch = content.match(/max_tokens=(\d+)/);
             const tempMatch = content.match(/temperature=([\d.]+)/);

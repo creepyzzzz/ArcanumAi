@@ -64,7 +64,10 @@ export function ChatInput({
   const [interimTranscript, setInterimTranscript] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
-  const [isCanvasMode, setIsCanvasMode] = useState(false);
+  // --- MODIFICATION START ---
+  // The isCanvasMode state is no longer needed and has been removed.
+  // const [isCanvasMode, setIsCanvasMode] = useState(false);
+  // --- MODIFICATION END ---
   const [animationKey, setAnimationKey] = useState(0);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,7 +142,10 @@ export function ChatInput({
       setAttachedFiles([]);
     }
 
-    onSendMessage(text.trim(), isCanvasMode, attachmentIds);
+    // --- MODIFICATION START ---
+    // The 'isCanvasMode' argument is now hardcoded to false.
+    onSendMessage(text.trim(), false, attachmentIds);
+    // --- MODIFICATION END ---
     setInterimTranscript('');
     setShowOptions(false);
   };
@@ -183,10 +189,13 @@ export function ChatInput({
     addFiles(files);
   };
   
-  const toggleCanvasMode = () => {
-    setIsCanvasMode(prev => !prev);
-    setShowOptions(false);
-  };
+  // --- MODIFICATION START ---
+  // The toggleCanvasMode function is no longer needed and has been removed.
+  // const toggleCanvasMode = () => {
+  //   setIsCanvasMode(prev => !prev);
+  //   setShowOptions(false);
+  // };
+  // --- MODIFICATION END ---
 
   const handleFocus = () => {
     isFocusedRef.current = true;
@@ -311,28 +320,31 @@ export function ChatInput({
                   >
                   <Plus className={`h-5 w-5 transition-transform duration-200 ${showOptions ? 'rotate-45' : ''}`} />
                   </Button>
+                  {/* --- MODIFICATION START --- */}
+                  {/* The Canvas button has been removed, and the animation and styling */}
+                  {/* for the remaining File button have been updated for a cleaner look. */}
                   <AnimatePresence>
                   {showOptions && (
                       <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-full mb-2 flex flex-col gap-2"
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute bottom-full mb-2"
                       >
-                      <Button type="button" className="gap-2" onClick={toggleCanvasMode}>
-                          <Code className="h-4 w-4" />
-                          Canvas
-                      </Button>
-                      <Button type="button" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+                      <Button 
+                        type="button" 
+                        className="gap-2 rounded-full shadow-lg" 
+                        onClick={() => fileInputRef.current?.click()}
+                      >
                           <Paperclip className="h-4 w-4" />
                           File
                       </Button>
                       </motion.div>
                   )}
                   </AnimatePresence>
+                  {/* --- MODIFICATION END --- */}
                   
-                  {/* --- MODIFICATION START --- */}
-                  {/* ModelSelector moved inside the input box */}
                   <ModelSelector
                     providers={providers}
                     selectedModel={currentModel}
@@ -340,7 +352,6 @@ export function ChatInput({
                     disabled={isStreaming || isSummarizing}
                     isSummarizing={isSummarizing}
                   />
-                  {/* --- MODIFICATION END --- */}
               </div>
 
               <div className="ml-auto flex items-center gap-1 pointer-events-auto">

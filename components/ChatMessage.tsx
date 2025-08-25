@@ -120,12 +120,11 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
             </div>
           )}
 
-          <div ref={messageContentRef} className="text-left">
+          <div ref={messageContentRef} className="text-left message-content">
             {message.role === 'user' ? (
-              <p className="text-base whitespace-pre-wrap">{message.content}</p>
+              <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (
                 <ReactMarkdown
-                  className="text-base"
                   remarkPlugins={[remarkGfm] as PluggableList}
                   components={customComponents}
                 >

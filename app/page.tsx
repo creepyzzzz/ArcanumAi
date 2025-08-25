@@ -7,12 +7,13 @@ import {
   PanelResizeHandle as ResizableHandle,
   ImperativePanelHandle,
 } from 'react-resizable-panels';
+import dynamic from 'next/dynamic';
 import { TopBar } from '@/components/TopBar';
 import { LeftSidebar } from '@/components/LeftSidebar';
 import { ChatTranscript } from '@/components/ChatTranscript';
 import { ChatInput } from '@/components/ChatInput';
 import { RightPanel } from '@/components/RightPanel';
-import { CanvasDialog } from '@/components/canvas/CanvasDialog';
+// import { CanvasDialog } from '@/components/canvas/CanvasDialog'; // <-- REMOVED STATIC IMPORT
 import { Database } from '@/lib/db';
 import { Storage } from '@/lib/storage';
 import { Thread, Message, FileRef, DocMeta, Attachment } from '@/types';
@@ -28,6 +29,15 @@ import { ProviderAdapter, ChatOptions } from '@/lib/providers/base';
 import { useThreadStore } from '@/lib/state/threadStore';
 import { checkHeuristics } from '@/lib/canvas/heuristics';
 import { Button } from '@/components/ui/button';
+
+// --- MODIFICATION START ---
+// Dynamically import CanvasDialog to prevent SSR issues with browser-only APIs.
+const CanvasDialog = dynamic(() => import('@/components/canvas/CanvasDialog').then(mod => mod.CanvasDialog), {
+  ssr: false,
+  loading: () => <div className="h-full w-full flex items-center justify-center bg-background"><p>Loading Canvas...</p></div>,
+});
+// --- MODIFICATION END ---
+
 
 const useIsMobile = (breakpoint = 768) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -610,7 +620,10 @@ export default function ChatPage() {
 
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
+        // --- MODIFICATION START ---
+        // Corrected the filter logic to check `m.id` instead of `m`.
         setMessages(prev => prev.filter(m => !m.id.startsWith('thinking') && !m.id.startsWith('streaming')));
+        // --- MODIFICATION END ---
       } else {
         console.error('Failed to send message:', error);
         const errorMessage: Message = {
@@ -722,6 +735,12 @@ export default function ChatPage() {
 
     const blob = await Database.getFileBlob(fileRef.blobId);
     if (!blob) return;
+
+    if (fileRef.type === 'application/pdf') {
+      const fileUrl = URL.createObjectURL(blob);
+      createAndOpenDoc('pdf', fileRef.name, fileUrl);
+      return;
+    }
 
     const codeMimeTypes = [
         'application/javascript', 'text/javascript',
@@ -867,8 +886,6 @@ export default function ChatPage() {
                         onOpenFileInCanvas={handleOpenFileInCanvas}
                       />
                     </div>
-                    {/* --- MODIFICATION START --- */}
-                    {/* Removed the unnecessary properties from the ChatInput component */}
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onFileUpload={handleFileUpload}
@@ -883,7 +900,6 @@ export default function ChatPage() {
                       isEnhancing={isEnhancing}
                       isSummarizing={isSummarizing}
                     />
-                    {/* --- MODIFICATION END --- */}
                   </div>
                 </ResizablePanel>
                 {isCanvasOpen && !isMobile && (
@@ -942,7 +958,7 @@ export default function ChatPage() {
         <>
           <div
             className="absolute inset-0 bg-black/50 z-20"
-            onClick={toggleFilesPanel}
+            onClick={toggleLeftSidebar}
           />
           <RightPanel
             files={files}

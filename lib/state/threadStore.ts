@@ -7,32 +7,29 @@ import { getThreadState, saveThreadState } from '@/lib/persist/indexedDb';
 
 interface ThreadStore {
   threadState: ThreadState | null;
-  setThreadState: (threadId: string) => Promise<void>; // Now async
+  setThreadState: (threadId: string) => Promise<void>;
   getActiveDoc: () => DocMeta | null;
   openDocInCanvas: (docId: string) => void;
   closeCanvas: () => void;
   updateDoc: (docId: string, updates: Partial<DocMeta>) => void;
+  // --- MODIFICATION START ---
+  // Added 'pdf' to the list of valid kinds for creating a document.
   createAndOpenDoc: (
-    kind: 'document' | 'code',
+    kind: 'document' | 'code' | 'pdf',
     name?: string,
     content?: string
   ) => void;
+  // --- MODIFICATION END ---
 }
 
 export const useThreadStore = create<ThreadStore>((set, get) => ({
   threadState: null,
 
-  /**
-   * Initializes or sets the thread state for a given thread ID by loading from IndexedDB.
-   * @param threadId The ID of the thread to load.
-   */
   setThreadState: async (threadId) => {
     const existingState = await getThreadState(threadId);
     if (existingState) {
       set({ threadState: existingState });
     } else {
-      // If no state exists in DB, create a new one.
-      // --- FIX: Added the required 'files' property, initializing it as an empty array. ---
       const newState: ThreadState = { threadId, docs: {}, files: [] };
       set({ threadState: newState });
       await saveThreadState(threadId, newState);
@@ -52,7 +49,6 @@ export const useThreadStore = create<ThreadStore>((set, get) => ({
         ...store.threadState,
         activeDocId: docId,
       };
-      // Persist change
       saveThreadState(newState.threadId, newState);
       return { threadState: newState };
     });
@@ -65,7 +61,6 @@ export const useThreadStore = create<ThreadStore>((set, get) => ({
         ...store.threadState,
         activeDocId: undefined,
       };
-      // Persist change
       saveThreadState(newState.threadId, newState);
       return { threadState: newState };
     });
@@ -91,7 +86,6 @@ export const useThreadStore = create<ThreadStore>((set, get) => ({
           [docId]: updatedDoc,
         },
       };
-      // Persist change
       saveThreadState(newState.threadId, newState);
       return { threadState: newState };
     });
@@ -122,7 +116,6 @@ export const useThreadStore = create<ThreadStore>((set, get) => ({
           [newDoc.id]: newDoc,
         },
       };
-      // Persist change
       saveThreadState(newState.threadId, newState);
       return { threadState: newState };
     });

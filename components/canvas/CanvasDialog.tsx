@@ -2,11 +2,13 @@
 
 import { useState, useEffect, Key } from 'react';
 import { useThreadStore } from '@/lib/state/threadStore';
+import { useUiStore } from '@/lib/state/uiStore'; // Import the UI store
 import { Button } from '@/components/ui/button';
 import { X, Copy, Download, Check, Code, Eye } from 'lucide-react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import { Highlight, Prism, themes, type Language } from 'prism-react-renderer';
 import Editor from '@monaco-editor/react';
+import { PdfViewer } from './PdfViewer';
 
 interface CodeBlockProps {
     node?: any;
@@ -17,13 +19,14 @@ interface CodeBlockProps {
 
 export function CanvasDialog() {
   const { getActiveDoc, closeCanvas, updateDoc } = useThreadStore();
+  const { fontSizes } = useUiStore(); // Get font sizes from the store
   const activeDoc = getActiveDoc();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('preview');
 
   useEffect(() => {
     if (activeDoc) {
-      setViewMode(activeDoc.kind === 'code' ? 'preview' : 'edit');
+      setViewMode(activeDoc.kind === 'code' || activeDoc.kind === 'pdf' ? 'preview' : 'edit');
     }
   }, [activeDoc]);
 
@@ -60,6 +63,7 @@ export function CanvasDialog() {
   };
 
   const isCode = activeDoc.kind === 'code';
+  const isPdf = activeDoc.kind === 'pdf';
 
   const markdownComponents: Components = {
     code: ({ node, inline, className, children, ...props }: CodeBlockProps) => {
@@ -73,7 +77,7 @@ export function CanvasDialog() {
           theme={themes.nightOwl}
         >
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <pre className={className} style={{...style, padding: '1rem', margin: 0, overflow: 'auto', borderRadius: '0.5rem'}}>
+            <pre className={className} style={{...style, padding: '1rem', margin: 0, overflow: 'auto', borderRadius: '0.5rem', fontSize: fontSizes.canvasCodePreview }}>
               {tokens.map((line, i) => {
                 const { key, ...lineProps } = getLineProps({ line, key: i });
                 return (
@@ -107,21 +111,27 @@ export function CanvasDialog() {
               {viewMode === 'preview' ? 'Edit' : 'Preview'}
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={handleCopy}>
-            {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-            {copied ? 'Copied!' : 'Copy'}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-1" />
-            Download
-          </Button>
+          {!isPdf && (
+            <>
+              <Button variant="ghost" size="sm" onClick={handleCopy}>
+                {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+            </>
+          )}
           <Button variant="ghost" size="icon" onClick={closeCanvas} className="h-8 w-8">
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto relative">
-         {isCode ? (
+         {isPdf ? (
+            <PdfViewer fileUrl={activeDoc.content} />
+         ) : isCode ? (
           viewMode === 'edit' ? (
             <Editor
               height="100%"
@@ -131,20 +141,20 @@ export function CanvasDialog() {
               theme="vs-dark"
               options={{
                 minimap: { enabled: false },
-                fontSize: 14,
+                fontSize: fontSizes.canvasCodeEditor, // Use canvas code editor font size
                 wordWrap: 'on',
                 scrollBeyondLastLine: false,
               }}
             />
           ) : (
-            <div className="p-4">
+            <div className="p-4" style={{ fontSize: fontSizes.canvasCodePreview }}>
               <ReactMarkdown components={markdownComponents}>
                 {`\`\`\`${activeDoc.language || ''}\n${activeDoc.content}\n\`\`\``}
               </ReactMarkdown>
             </div>
           )
         ) : (
-          <article className="prose prose-sm dark:prose-invert max-w-none p-4">
+          <article className="prose dark:prose-invert max-w-none p-4 canvas-document">
             <ReactMarkdown>{activeDoc.content}</ReactMarkdown>
           </article>
         )}

@@ -31,6 +31,12 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
+    /* Font Size Variables */
+    --font-size-general: 16px;
+    --font-size-code: 14px;
+    --font-size-canvas: 16px;
+    --font-size-chat: 14px;
   }
 
   .dark {
@@ -62,11 +68,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: var(--font-size-general) !important;
   }
 }
 
-/* --- MODIFICATION START --- */
-/* Added the utility for the background glow effect. */
 @layer utilities {
   .bg-gradient-glow {
     background-image: radial-gradient(circle at center, 
@@ -76,7 +81,6 @@
     filter: blur(80px);
   }
 }
-/* --- MODIFICATION END --- */
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -123,7 +127,8 @@
 }
 
 .message-content {
-  @apply text-sm leading-relaxed;
+  font-size: var(--font-size-chat) !important;
+  @apply leading-relaxed;
 }
 
 .message-content p {
@@ -131,11 +136,13 @@
 }
 
 .message-content pre {
-  @apply bg-muted p-3 rounded-md overflow-x-auto text-xs;
+  @apply bg-muted p-3 rounded-md overflow-x-auto;
+  font-size: var(--font-size-code) !important;
 }
 
 .message-content code {
-  @apply bg-muted px-1 py-0.5 rounded text-xs;
+  @apply bg-muted px-1 py-0.5 rounded;
+  font-size: var(--font-size-code) !important;
 }
 
 .message-content pre code {
@@ -183,4 +190,9 @@
 
 .message-content th {
   @apply bg-muted font-medium;
+}
+
+/* Style for canvas documents */
+.canvas-document {
+    font-size: var(--font-size-canvas) !important;
 }
