@@ -69,6 +69,11 @@
   body {
     @apply bg-background text-foreground;
     font-size: var(--font-size-general) !important;
+
+    /* --- FIX FOR MOBILE APP SAFE AREAS --- */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    /* --- END FIX --- */
   }
 }
 
@@ -196,9 +201,3 @@
 .canvas-document {
     font-size: var(--font-size-canvas) !important;
 }
-
-/* --- FIX FOR ANDROID STATUS BAR --- */
-body {
-  padding-top: env(safe-area-inset-top);
-}
-/* --- END FIX --- */

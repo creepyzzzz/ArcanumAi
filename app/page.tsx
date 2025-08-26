@@ -28,6 +28,7 @@ import { ProviderAdapter, ChatOptions } from '@/lib/providers/base';
 import { useThreadStore } from '@/lib/state/threadStore';
 import { checkHeuristics } from '@/lib/canvas/heuristics';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const CanvasDialog = dynamic(() => import('@/components/canvas/CanvasDialog').then(mod => mod.CanvasDialog), {
   ssr: false,
@@ -118,12 +119,10 @@ export default function ChatPage() {
 
   const [showNewChatWarning, setShowNewChatWarning] = useState(false);
   
-  // --- FIX FOR HYDRATION START ---
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
-  // --- FIX FOR HYDRATION END ---
 
   const isMobile = useIsMobile();
 
@@ -814,6 +813,14 @@ export default function ChatPage() {
     ? threads.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : threads;
 
+  if (!isClient) {
+    return (
+      <div className="flex h-dvh w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   if (isMobile && isCanvasOpen) {
     return (
       <div className="h-dvh w-screen bg-background">
@@ -825,45 +832,43 @@ export default function ChatPage() {
   return (
     <div className="relative flex h-dvh bg-background text-foreground overflow-hidden text-sm lg:text-[17px]">
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {isClient && (
-          <ResizablePanel
-            ref={leftPanelRef}
-            defaultSize={20}
-            minSize={15}
-            maxSize={30}
-            collapsible
-            collapsedSize={isMobile ? 0 : 4.5}
-            onCollapse={() => {
-              setIsLeftSidebarCollapsed(true);
-              if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: true });
-            }}
-            onExpand={() => {
-              setIsLeftSidebarCollapsed(false);
-              if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: false });
-            }}
-            className={`
-              transition-all duration-300 ease-in-out
-              ${isMobile ? 'absolute h-full z-20 w-4/5 max-w-xs bg-background' : 'relative'}
-              ${isMobile && isLeftSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
-            `}
-          >
-            <LeftSidebar
-              threads={filteredThreads}
-              selectedThreadId={selectedThread?.id || null}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onThreadSelect={selectThread}
-              onNewChat={createNewThread}
-              onRenameThread={updateThreadTitle}
-              onDuplicateThread={duplicateThread}
-              onDeleteThread={deleteThread}
-              onExportThread={exportThread}
-              providers={masterProviders}
-              isCollapsed={isLeftSidebarCollapsed && !isMobile}
-              onToggleCollapse={toggleLeftSidebar}
-            />
-          </ResizablePanel>
-        )}
+        <ResizablePanel
+          ref={leftPanelRef}
+          defaultSize={20}
+          minSize={15}
+          maxSize={30}
+          collapsible
+          collapsedSize={isMobile ? 0 : 4.5}
+          onCollapse={() => {
+            setIsLeftSidebarCollapsed(true);
+            if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: true });
+          }}
+          onExpand={() => {
+            setIsLeftSidebarCollapsed(false);
+            if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: false });
+          }}
+          className={`
+            transition-all duration-300 ease-in-out
+            ${isMobile ? 'absolute h-full z-20 w-4/5 max-w-xs bg-background' : 'relative'}
+            ${isMobile && isLeftSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
+          `}
+        >
+          <LeftSidebar
+            threads={filteredThreads}
+            selectedThreadId={selectedThread?.id || null}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onThreadSelect={selectThread}
+            onNewChat={createNewThread}
+            onRenameThread={updateThreadTitle}
+            onDuplicateThread={duplicateThread}
+            onDeleteThread={deleteThread}
+            onExportThread={exportThread}
+            providers={masterProviders}
+            isCollapsed={isLeftSidebarCollapsed && !isMobile}
+            onToggleCollapse={toggleLeftSidebar}
+          />
+        </ResizablePanel>
 
         <ResizableHandle className={isMobile ? 'hidden' : ''} />
 
@@ -988,5 +993,5 @@ export default function ChatPage() {
         </div>
       )}
     </div>
-  );
+  )
 }

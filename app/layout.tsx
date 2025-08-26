@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { AppInitializer } from '@/components/AppInitializer'; // Import the new component
+import { AppInitializer } from '@/components/AppInitializer';
 import './globals.css';
 import '@/app/fonts.css';
 
@@ -17,7 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {/* This meta tag is crucial for proper mobile app display */}
+        <meta 
+          name="viewport" 
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover" 
+        />
       </head>
       <body>
         <ThemeProvider
