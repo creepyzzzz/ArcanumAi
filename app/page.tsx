@@ -830,7 +830,15 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="relative flex h-dvh bg-background text-foreground overflow-hidden text-sm lg:text-[17px]">
+    <div 
+        className="relative flex h-dvh bg-background text-foreground overflow-hidden text-sm lg:text-[17px]"
+        style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            paddingLeft: 'env(safe-area-inset-left)',
+            paddingRight: 'env(safe-area-inset-right)',
+        }}
+    >
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel
           ref={leftPanelRef}
@@ -849,7 +857,7 @@ export default function ChatPage() {
           }}
           className={`
             transition-all duration-300 ease-in-out
-            ${isMobile ? 'absolute h-full z-20 w-4/5 max-w-xs bg-background' : 'relative'}
+            ${isMobile ? 'absolute h-full z-40 w-4/5 max-w-xs bg-background' : 'relative'}
             ${isMobile && isLeftSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
           `}
         >
@@ -954,7 +962,7 @@ export default function ChatPage() {
 
       {isMobile && !isLeftSidebarCollapsed && (
         <div
-          className="absolute inset-0 bg-black/50 z-10"
+          className="absolute inset-0 bg-black/50 z-30"
           onClick={toggleLeftSidebar}
         />
       )}
