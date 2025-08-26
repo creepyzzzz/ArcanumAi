@@ -13,7 +13,6 @@ import { LeftSidebar } from '@/components/LeftSidebar';
 import { ChatTranscript } from '@/components/ChatTranscript';
 import { ChatInput } from '@/components/ChatInput';
 import { RightPanel } from '@/components/RightPanel';
-// import { CanvasDialog } from '@/components/canvas/CanvasDialog'; // <-- REMOVED STATIC IMPORT
 import { Database } from '@/lib/db';
 import { Storage } from '@/lib/storage';
 import { Thread, Message, FileRef, DocMeta, Attachment } from '@/types';
@@ -30,14 +29,10 @@ import { useThreadStore } from '@/lib/state/threadStore';
 import { checkHeuristics } from '@/lib/canvas/heuristics';
 import { Button } from '@/components/ui/button';
 
-// --- MODIFICATION START ---
-// Dynamically import CanvasDialog to prevent SSR issues with browser-only APIs.
 const CanvasDialog = dynamic(() => import('@/components/canvas/CanvasDialog').then(mod => mod.CanvasDialog), {
   ssr: false,
   loading: () => <div className="h-full w-full flex items-center justify-center bg-background"><p>Loading Canvas...</p></div>,
 });
-// --- MODIFICATION END ---
-
 
 const useIsMobile = (breakpoint = 768) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -122,9 +117,15 @@ export default function ChatPage() {
   const contextSummaryRef = useRef<string | null>(null);
 
   const [showNewChatWarning, setShowNewChatWarning] = useState(false);
+  
+  // --- FIX FOR HYDRATION START ---
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  // --- FIX FOR HYDRATION END ---
 
   const isMobile = useIsMobile();
-
 
   const {
     setThreadState,
@@ -620,10 +621,7 @@ export default function ChatPage() {
 
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        // --- MODIFICATION START ---
-        // Corrected the filter logic to check `m.id` instead of `m`.
         setMessages(prev => prev.filter(m => !m.id.startsWith('thinking') && !m.id.startsWith('streaming')));
-        // --- MODIFICATION END ---
       } else {
         console.error('Failed to send message:', error);
         const errorMessage: Message = {
@@ -827,43 +825,45 @@ export default function ChatPage() {
   return (
     <div className="relative flex h-dvh bg-background text-foreground overflow-hidden text-sm lg:text-[17px]">
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel
-          ref={leftPanelRef}
-          defaultSize={20}
-          minSize={15}
-          maxSize={30}
-          collapsible
-          collapsedSize={isMobile ? 0 : 4.5}
-          onCollapse={() => {
-            setIsLeftSidebarCollapsed(true);
-            if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: true });
-          }}
-          onExpand={() => {
-            setIsLeftSidebarCollapsed(false);
-            if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: false });
-          }}
-          className={`
-            transition-all duration-300 ease-in-out
-            ${isMobile ? 'absolute h-full z-20 w-4/5 max-w-xs bg-background' : 'relative'}
-            ${isMobile && isLeftSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
-          `}
-        >
-          <LeftSidebar
-            threads={filteredThreads}
-            selectedThreadId={selectedThread?.id || null}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onThreadSelect={selectThread}
-            onNewChat={createNewThread}
-            onRenameThread={updateThreadTitle}
-            onDuplicateThread={duplicateThread}
-            onDeleteThread={deleteThread}
-            onExportThread={exportThread}
-            providers={masterProviders}
-            isCollapsed={isLeftSidebarCollapsed && !isMobile}
-            onToggleCollapse={toggleLeftSidebar}
-          />
-        </ResizablePanel>
+        {isClient && (
+          <ResizablePanel
+            ref={leftPanelRef}
+            defaultSize={20}
+            minSize={15}
+            maxSize={30}
+            collapsible
+            collapsedSize={isMobile ? 0 : 4.5}
+            onCollapse={() => {
+              setIsLeftSidebarCollapsed(true);
+              if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: true });
+            }}
+            onExpand={() => {
+              setIsLeftSidebarCollapsed(false);
+              if (!isMobile) Storage.setPreferences({ isLeftSidebarCollapsed: false });
+            }}
+            className={`
+              transition-all duration-300 ease-in-out
+              ${isMobile ? 'absolute h-full z-20 w-4/5 max-w-xs bg-background' : 'relative'}
+              ${isMobile && isLeftSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
+            `}
+          >
+            <LeftSidebar
+              threads={filteredThreads}
+              selectedThreadId={selectedThread?.id || null}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onThreadSelect={selectThread}
+              onNewChat={createNewThread}
+              onRenameThread={updateThreadTitle}
+              onDuplicateThread={duplicateThread}
+              onDeleteThread={deleteThread}
+              onExportThread={exportThread}
+              providers={masterProviders}
+              isCollapsed={isLeftSidebarCollapsed && !isMobile}
+              onToggleCollapse={toggleLeftSidebar}
+            />
+          </ResizablePanel>
+        )}
 
         <ResizableHandle className={isMobile ? 'hidden' : ''} />
 

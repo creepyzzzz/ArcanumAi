@@ -196,3 +196,9 @@
 .canvas-document {
     font-size: var(--font-size-canvas) !important;
 }
+
+/* --- FIX FOR ANDROID STATUS BAR --- */
+body {
+  padding-top: env(safe-area-inset-top);
+}
+/* --- END FIX --- */
