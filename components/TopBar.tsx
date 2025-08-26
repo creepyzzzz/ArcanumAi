@@ -18,7 +18,7 @@ export function TopBar({
   onToggleSidebar,
 }: TopBarProps) {
   return (
-    <div className="relative z-10 flex items-center justify-between py-1 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="relative z-20 flex items-center justify-between py-1 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center gap-2">
         {/* --- UPDATE: Added hamburger menu for mobile --- */}
         <Button
