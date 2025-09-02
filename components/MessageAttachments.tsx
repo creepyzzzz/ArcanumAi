@@ -66,6 +66,7 @@ export function MessageAttachments({ files }: MessageAttachmentsProps) {
 
     if (category === 'image' && content) {
       return (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={content}
           alt={file.name}

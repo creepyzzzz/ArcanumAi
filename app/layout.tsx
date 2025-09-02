@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AppInitializer } from '@/components/AppInitializer';
 import './globals.css';
@@ -32,16 +33,12 @@ export default function RootLayout({
         >
           <AppInitializer>{children}</AppInitializer>
         </ThemeProvider>
-
-        {/* --- FIX: Adds a debug console on mobile for any browser --- */}
         {process.env.NODE_ENV === 'development' && (
-          <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+          <>
+            <Script src="//cdn.jsdelivr.net/npm/eruda" />
+            <Script id="eruda-init">{`eruda.init();`}</Script>
+          </>
         )}
-        {process.env.NODE_ENV === 'development' && (
-          <script>eruda.init();</script>
-        )}
-        {/* --- END FIX --- */}
-
       </body>
     </html>
   );

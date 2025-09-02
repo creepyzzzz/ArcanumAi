@@ -120,7 +120,7 @@ export function FilesPanel({ files, onFileRemove, onFileSelect }: FilesPanelProp
                     >
                       {getFileCategory(file.type) === 'image' && fileContents[file.id] && (
                         <div className="mb-2">
-                          {/* --- FIX: Added alt prop to the image tag --- */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={fileContents[file.id]}
                             alt={file.name}
