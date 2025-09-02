@@ -32,6 +32,16 @@ export default function RootLayout({
         >
           <AppInitializer>{children}</AppInitializer>
         </ThemeProvider>
+
+        {/* --- FIX: Adds a debug console on mobile for any browser --- */}
+        {process.env.NODE_ENV === 'development' && (
+          <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+        )}
+        {process.env.NODE_ENV === 'development' && (
+          <script>eruda.init();</script>
+        )}
+        {/* --- END FIX --- */}
+
       </body>
     </html>
   );

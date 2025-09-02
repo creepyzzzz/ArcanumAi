@@ -1,5 +1,3 @@
-// components/TopBar.tsx
-
 'use client';
 
 import { Button } from './ui/button';
@@ -18,9 +16,9 @@ export function TopBar({
   onToggleSidebar,
 }: TopBarProps) {
   return (
-    <div className="relative z-20 flex items-center justify-between py-1 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="relative z-20 flex-shrink-0 flex items-center justify-between py-1 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center gap-2">
-        {/* --- UPDATE: Added hamburger menu for mobile --- */}
+        {/* This button now correctly toggles the mobile sidebar state */}
         <Button
           variant="ghost"
           size="icon"
@@ -41,7 +39,6 @@ export function TopBar({
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
-          {/* --- UPDATE: Hide text on smaller screens --- */}
           <span className="hidden sm:inline">Files</span>
         </Button>
         

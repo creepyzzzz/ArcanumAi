@@ -1,41 +1,80 @@
-// path: app/api/chat/stream/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
+import { StreamingTextResponse } from 'ai';
 
-// This is a mock streaming endpoint. In a real application, you would
-// connect to your AI model provider (e.g., Gemini, OpenAI) here.
+export const runtime = 'edge';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages } = body;
+    const { messages, model, attachments } = body;
 
-    // Create a streaming response
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
+    // --- Attachment Handling (from openrouter.ts) ---
+    // This logic correctly prepares multimodal messages for OpenRouter.
+    const messagesForApi = JSON.parse(JSON.stringify(messages));
+    const isMultimodal = model.includes('gemini-flash') || model.includes('qwen-2.5-vl');
+    
+    let lastUserMessageIndex = -1;
+    for (let i = messagesForApi.length - 1; i >= 0; i--) {
+      if (messagesForApi[i].role === 'user') {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
 
-        // Simulate a streaming response with a delay
-        const fullResponse =
-          'Of course! Here is a simple Python script to demonstrate a basic web server. I will place it into a code document for you.\n\n```python\nimport http.server\nimport socketserver\n\nPORT = 8000\n\nHandler = http.server.SimpleHTTPRequestHandler\n\nwith socketserver.TCPServer(("", PORT), Handler) as httpd:\n    print("serving at port", PORT)\n    httpd.serve_forever()\n```\n\nThis script uses Python\'s built-in libraries to create a web server that serves files from the current directory. You can run it from your terminal.';
+    if (lastUserMessageIndex !== -1 && attachments && attachments.length > 0) {
+      const lastUserMessage = messagesForApi[lastUserMessageIndex];
+      let combinedTextContent = lastUserMessage.content || '';
+      const imageAttachments = [];
 
-        for (let i = 0; i < fullResponse.length; i++) {
-          await new Promise((resolve) => setTimeout(resolve, 10)); // 10ms delay per character
-          controller.enqueue(encoder.encode(fullResponse[i]));
+      for (const att of attachments) {
+        if (isMultimodal && att.type === 'image' && att.dataUrl) {
+          imageAttachments.push({
+            type: 'image_url',
+            image_url: { url: att.dataUrl },
+          });
+        } else if ((att.type === 'text' || att.type === 'document') && att.text) {
+          combinedTextContent = `Attached File: "${att.name}"\n\n---\n${att.text}\n---\n\nUser Question: ${combinedTextContent}`;
         }
+      }
 
-        controller.close();
-      },
-    });
+      if (imageAttachments.length > 0) {
+        lastUserMessage.content = [{ type: 'text', text: combinedTextContent }, ...imageAttachments];
+      } else {
+        lastUserMessage.content = combinedTextContent;
+      }
+    }
+    // --- End Attachment Handling ---
 
-    return new Response(stream, {
+    const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        // These headers are crucial for free models on OpenRouter
+        'HTTP-Referer': req.headers.get('origin') || 'https://your-production-url.com',
+        'X-Title': 'Arcanum AI Chat',
       },
+      body: JSON.stringify({
+        model: model,
+        messages: messagesForApi,
+        stream: true,
+      }),
     });
-  } catch (error) {
-    console.error('Error in streaming route:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+
+    if (!openRouterResponse.ok) {
+      const errorBody = await openRouterResponse.text();
+      console.error('OpenRouter Relay Error:', errorBody);
+      return new NextResponse(errorBody, {
+        status: openRouterResponse.status,
+        statusText: openRouterResponse.statusText,
+      });
+    }
+
+    // Return the streaming response back to the client
+    return new StreamingTextResponse(openRouterResponse.body as ReadableStream);
+
+  } catch (e: any) {
+    console.error('Relay Error:', e);
+    return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
   }
 }

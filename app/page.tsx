@@ -219,17 +219,6 @@ export default function ChatPage() {
       setShowFilesPanel(prefs.showFilesPanel);
       setProviderModels(prefs.providerModels || {});
 
-      const leftCollapsed = isMobile || prefs.isLeftSidebarCollapsed || false;
-      setIsLeftSidebarCollapsed(leftCollapsed);
-
-      if (leftPanelRef.current) {
-        if (leftCollapsed) {
-          leftPanelRef.current.collapse();
-        } else {
-          leftPanelRef.current.expand();
-        }
-      }
-
       const allModelIds = masterProviders.flatMap(p => p.models.map(m => `${p.id}:${m.id}`));
       if (prefs.selectedModel && allModelIds.includes(prefs.selectedModel)) {
         setCurrentModel(prefs.selectedModel);
@@ -239,13 +228,28 @@ export default function ChatPage() {
 
       if (allThreads.length > 0 && !selectedThread) {
         await selectThread(allThreads[0].id);
-      } else if (allThreads.length === 0) {
+      } else if (allThreads.length === 0 && !selectedThread) {
         await createNewThread();
       }
     };
 
     loadData();
-  }, [masterProviders, isMobile, createNewThread, selectThread, selectedThread]);
+  }, [masterProviders, createNewThread, selectThread, selectedThread]);
+
+  // This effect handles the initial and responsive collapsing of the left sidebar.
+  useEffect(() => {
+    const panel = leftPanelRef.current;
+    if (panel) {
+      const prefs = Storage.getPreferences();
+      const shouldBeCollapsed = isMobile || prefs.isLeftSidebarCollapsed || false;
+
+      if (shouldBeCollapsed && !panel.isCollapsed()) {
+        panel.collapse();
+      } else if (!shouldBeCollapsed && panel.isCollapsed()) {
+        panel.expand();
+      }
+    }
+  }, [isMobile]);
 
   const availableProviders = useMemo(() => {
     const apiKeys = Storage.getApiKeys();

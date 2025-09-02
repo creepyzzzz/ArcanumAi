@@ -30,7 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
-import { useUiStore } from '@/lib/state/uiStore'; // Import the UI store
+import { useUiStore } from '@/lib/state/uiStore';
 
 
 interface LeftSidebarProps {
@@ -47,6 +47,7 @@ interface LeftSidebarProps {
   providers: ProviderAdapter[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  isMobile?: boolean;
 }
 
 export function LeftSidebar({
@@ -62,13 +63,14 @@ export function LeftSidebar({
   onExportThread,
   providers,
   isCollapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  isMobile = false,
 }: LeftSidebarProps) {
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [isHovered, setIsHovered] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
-  const { fontSizes } = useUiStore(); // Get font sizes from the store
+  const { fontSizes } = useUiStore();
 
   useEffect(() => {
     if (editingThreadId && editInputRef.current) {
@@ -115,21 +117,22 @@ export function LeftSidebar({
     return date.toLocaleDateString();
   };
 
+  // --- FIX: Logic is now unified for both mobile and desktop ---
+  // The parent `page.tsx` controls the collapsed state via ResizablePanel logic.
+  // This component just needs to render the correct view based on the `isCollapsed` prop.
+
   if (isCollapsed) {
-    // --- UPDATED COLLAPSED VIEW ---
-    // This structure uses justify-between to correctly position the top and bottom elements.
     return (
       <div 
-        className="flex flex-col h-full items-center justify-between py-4 relative bg-muted/10 border-r"
+        className="flex flex-col h-full items-center justify-between py-4 relative bg-muted/10"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ fontSize: fontSizes.general }}
       >
         <TooltipProvider delayDuration={0}>
-          {/* Top section with expand and new chat buttons */}
           <div className="flex flex-col items-center space-y-2">
             <div 
-              className={`transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+              className={`transition-opacity duration-200 ${isHovered || isMobile ? 'opacity-100' : 'opacity-0'}`}
             >
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -158,7 +161,6 @@ export function LeftSidebar({
             </Tooltip>
           </div>
 
-          {/* Bottom section with the settings button */}
           <div className="flex flex-col items-center space-y-2">
             <SettingsDialog providers={providers} asIcon />
           </div>
@@ -167,10 +169,10 @@ export function LeftSidebar({
     );
   }
 
-  // --- EXPANDED VIEW ---
+  // This is the full, expanded view for both desktop and mobile
   return (
-    <div className="flex flex-col h-full bg-muted/10 border-r" style={{ fontSize: fontSizes.general }}>
-      <div className="p-4 space-y-3 border-b">
+    <div className="flex flex-col h-full bg-muted/10" style={{ fontSize: fontSizes.general }}>
+      <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
            <h1 className="text-lg font-semibold">Chats</h1>
            <TooltipProvider delayDuration={0}>
@@ -189,7 +191,6 @@ export function LeftSidebar({
         <NewChatButton onClick={onNewChat} />
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          {/* --- UPDATE: Decreased corner roundness --- */}
           <Input
             placeholder="Search chats..."
             value={searchQuery}
@@ -208,7 +209,6 @@ export function LeftSidebar({
         ) : (
           <div className="p-2 space-y-1">
             {threads.map((thread) => (
-              // --- UPDATE: Decreased corner roundness ---
               <div
                 key={thread.id}
                 className={`group relative rounded-xl p-3 cursor-pointer transition-colors ${
