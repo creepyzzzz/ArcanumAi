@@ -30,7 +30,7 @@
     "@tiptap/react": "^2.4.0",
     "@tiptap/starter-kit": "^2.4.0",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "ai": "^5.0.16",
+    "ai": "^5.0.29",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.0.8",

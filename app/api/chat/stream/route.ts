@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { StreamingTextResponse } from 'ai';
+import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
@@ -71,8 +71,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Return the streaming response back to the client
-    return new StreamingTextResponse(openRouterResponse.body as ReadableStream);
-
+    return new NextResponse(openRouterResponse.body, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
   } catch (e: any) {
     console.error('Relay Error:', e);
     return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
