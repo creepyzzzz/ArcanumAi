@@ -59,7 +59,9 @@ export function ModelSelector({
     };
   }, []);
 
-  const [providerId, modelId] = selectedModel.split(':');
+  const separatorIndex = selectedModel.indexOf(':');
+  const providerId = selectedModel.substring(0, separatorIndex);
+  const modelId = selectedModel.substring(separatorIndex + 1);
   const selectedProvider = providers.find(p => p.id === providerId);
   const selectedModelName = selectedProvider?.models.find(m => m.id === modelId)?.label || 'Unknown Model';
 

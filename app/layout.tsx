@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import { ClientThemeProvider } from '@/components/ClientThemeProvider';
 import { AppInitializer } from '@/components/AppInitializer';
 import './globals.css';
 import '@/app/fonts.css';
@@ -25,14 +25,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider
+        <ClientThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           <AppInitializer>{children}</AppInitializer>
-        </ThemeProvider>
+        </ClientThemeProvider>
         {process.env.NODE_ENV === 'development' && (
           <>
             <Script src="//cdn.jsdelivr.net/npm/eruda" />

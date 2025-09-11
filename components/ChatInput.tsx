@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, CSSProperties } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ModelSelector } from '@/components/ModelSelector';
@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSendMessage: (text: string, isCanvasMode: boolean, attachmentIds?: string[]) => void;
@@ -282,9 +283,21 @@ export function ChatInput({
 
       <form
         onSubmit={handleSubmit}
-        className={`relative border-2 bg-background rounded-3xl shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-white/15 transition-all duration-300 flex flex-col focus-within:border-primary ${
-          isDragging ? 'border-primary bg-primary/5' : 'border-border/50'
-        }`}
+        style={
+          {
+            "--bg": isDragging
+              ? "hsla(var(--primary-hsl), 0.05)"
+              : "hsl(var(--background))",
+          } as CSSProperties
+        }
+        className={cn(
+          "group relative z-0",
+          "[background:var(--bg)]", // Use CSS variable for background
+          "rounded-3xl shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-white/15 transition-all duration-300 flex flex-col focus-within:border-primary dark:focus-within:shadow-primary/30",
+          "dark:glow-effect",
+          isDragging ? "border-primary" : "border-border/50",
+          "border-2", // Keep border style
+        )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

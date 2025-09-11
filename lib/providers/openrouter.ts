@@ -14,7 +14,7 @@ export class OpenRouterAdapter implements ProviderAdapter {
 
     // Multimodal Specialists (Seeing & Analyzing)
     { id: 'qwen/qwen-2.5-vl-72b-instruct', label: 'Qwen 2.5 VL 72B (Vision)' },
-    { id: 'google/gemini-flash-2.0-experimental', label: 'Gemini 2.0 Flash (Files)' },
+    { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (Files)' },
 
     // Everyday Workhorses (Speed & Tools)
     { id: 'mistralai/mistral-nemo', label: 'Mistral Nemo (Tools)' },

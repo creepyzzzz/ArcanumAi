@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
 import {
   PanelGroup as ResizablePanelGroup,
   Panel as ResizablePanel,
@@ -108,7 +108,7 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentModel, setCurrentModel] = useState(defaultModel);
   const [providerModels, setProviderModels] = useState<{ [key: string]: string[] }>({});
-  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
+  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(true);
   const [masterProviders, setMasterProviders] = useState<ProviderAdapter[]>(defaultProviders);
 
   const [chatInputText, setChatInputText] = useState('');
@@ -236,20 +236,7 @@ export default function ChatPage() {
     loadData();
   }, [masterProviders, createNewThread, selectThread, selectedThread]);
 
-  // This effect handles the initial and responsive collapsing of the left sidebar.
-  useEffect(() => {
-    const panel = leftPanelRef.current;
-    if (panel) {
-      const prefs = Storage.getPreferences();
-      const shouldBeCollapsed = isMobile || prefs.isLeftSidebarCollapsed || false;
-
-      if (shouldBeCollapsed && !panel.isCollapsed()) {
-        panel.collapse();
-      } else if (!shouldBeCollapsed && panel.isCollapsed()) {
-        panel.expand();
-      }
-    }
-  }, [isMobile]);
+  
 
   const availableProviders = useMemo(() => {
     const apiKeys = Storage.getApiKeys();
@@ -497,7 +484,7 @@ export default function ChatPage() {
       }
 
       if (providerId === 'builtin') {
-        const response = await fetch('/api/relay/chat', {
+        const response = await fetch('/api/chat/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: apiMessages, model: modelId, attachments }),
@@ -514,19 +501,40 @@ export default function ChatPage() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          streamedResponseText += decoder.decode(value);
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && (lastMessage.id.startsWith('thinking') || lastMessage.id.startsWith('streaming'))) {
-              lastMessage.id = `streaming-${Date.now()}`;
-              lastMessage.content = streamedResponseText;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data.trim() === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content) {
+                  streamedResponseText += content;
+                  setMessages(prev => {
+                    const newMessages = [...prev];
+                    const lastMessage = newMessages[newMessages.length - 1];
+                    if (lastMessage && (lastMessage.id.startsWith('thinking') || lastMessage.id.startsWith('streaming'))) {
+                      lastMessage.id = `streaming-${Date.now()}`;
+                      lastMessage.content = streamedResponseText;
+                    }
+                    return newMessages;
+                  });
+                }
+              } catch (e) {
+                // Ignore parsing errors
+              }
             }
-            return newMessages;
-          });
+          }
         }
 
       } else if (providerId === 'custom') {
@@ -846,7 +854,7 @@ export default function ChatPage() {
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel
           ref={leftPanelRef}
-          defaultSize={20}
+          defaultSize={isMobile ? 0 : 4.5}
           minSize={15}
           maxSize={30}
           collapsible
@@ -895,28 +903,33 @@ export default function ChatPage() {
                       onToggleFilesPanel={toggleFilesPanel}
                       onToggleSidebar={toggleLeftSidebar}
                     />
-                    <div className="flex-1 overflow-y-auto">
-                      <ChatTranscript
-                        messages={messages}
-                        files={files}
-                        isStreaming={isStreaming}
-                        onOpenFileInCanvas={handleOpenFileInCanvas}
-                      />
+                    <div className={`flex-1 flex flex-col ${messages.length === 0 && !isMobile ? 'justify-center' : ''}`}>
+                      <div className={`${messages.length > 0 || isMobile ? 'flex-1' : ''} overflow-y-auto min-h-0`}>
+                        <ChatTranscript
+                          messages={messages}
+                          files={files}
+                          isStreaming={isStreaming}
+                          onOpenFileInCanvas={handleOpenFileInCanvas}
+                          isMobile={isMobile}
+                        />
+                      </div>
+                      <div className="flex-shrink-0">
+                        <ChatInput
+                          onSendMessage={handleSendMessage}
+                          onFileUpload={handleFileUpload}
+                          onStopGenerating={handleStopGenerating}
+                          isStreaming={isStreaming}
+                          currentModel={currentModel}
+                          onModelChange={handleModelChange}
+                          providers={availableProviders}
+                          text={chatInputText}
+                          onTextChange={setChatInputText}
+                          onEnhancePrompt={handleEnhancePrompt}
+                          isEnhancing={isEnhancing}
+                          isSummarizing={isSummarizing}
+                        />
+                      </div>
                     </div>
-                    <ChatInput
-                      onSendMessage={handleSendMessage}
-                      onFileUpload={handleFileUpload}
-                      onStopGenerating={handleStopGenerating}
-                      isStreaming={isStreaming}
-                      currentModel={currentModel}
-                      onModelChange={handleModelChange}
-                      providers={availableProviders}
-                      text={chatInputText}
-                      onTextChange={setChatInputText}
-                      onEnhancePrompt={handleEnhancePrompt}
-                      isEnhancing={isEnhancing}
-                      isSummarizing={isSummarizing}
-                    />
                   </div>
                 </ResizablePanel>
                 {isCanvasOpen && !isMobile && (

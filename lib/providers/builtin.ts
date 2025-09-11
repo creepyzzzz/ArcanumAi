@@ -6,23 +6,12 @@ export class BuiltInAdapter implements ProviderAdapter {
   needsKey = false; 
   
   models = [
-    // --- MODIFICATION START ---
-    // The ID for Mistral 7B Instruct has been updated to include its full
-    // vendor prefix, making it consistent with all other models in this list.
-    { id: 'mistralai/mistral-7b-instruct', label: 'Mistral 7B Instruct' },
-    // --- MODIFICATION END ---
-    
-    // Genius Brains (Maximum Reasoning Power)
-    { id: 'meta-llama/llama-3.1-405b-instruct', label: 'Llama 3.1 405B (Genius)' },
-    { id: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (Code & Logic)' },
-
-    // Multimodal Specialists (Seeing & Analyzing)
-    { id: 'qwen/qwen-2.5-vl-72b-instruct', label: 'Qwen 2.5 VL 72B (Vision)' },
-    { id: 'google/gemini-flash-2.0-experimental', label: 'Gemini 2.0 Flash (Files)' },
-
-    // Everyday Workhorses (Speed & Tools)
-    { id: 'mistralai/mistral-nemo', label: 'Mistral Nemo (Tools)' },
-    { id: 'meta-llama/llama-3.2-3b-instruct', label: 'Llama 3.2 3B (Fast)' },
+    { id: 'mistralai/mistral-7b-instruct:free', label: 'Mistral 7B Instruct' },
+    { id: 'meta-llama/llama-3-8b-instruct:free', label: 'Llama 3 8B (Fast & Capable)' },
+    { id: 'deepseek/deepseek-chat-v3.1:free', label: 'DeepSeek Chat V3.1' },
+    { id: 'openrouter/sonoma-sky-alpha', label: 'Sonoma Sky Alpha' },
+    { id: 'openai/gpt-oss-120b:free', label: 'GPT-OSS 120B' },
+  
   ];
 
   async sendChat(opts: ChatOptions): Promise<{ text: string }> {

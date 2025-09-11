@@ -42,6 +42,9 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
+	sidebar: {
+				DEFAULT: 'hsl(var(--sidebar-background))',
+			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -93,6 +96,24 @@ const config: Config = {
             '75%': { transform: 'scale(1.05) rotate(0deg)', opacity: '0.7' },
         },
         // --- MODIFICATION END ---
+        'shimmer-slide': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        'spin-around': {
+          '0%': {
+            transform: 'translateZ(0) rotate(0)',
+          },
+          '15%, 35%': {
+            transform: 'translateZ(0) rotate(90deg)',
+          },
+          '65%, 85%': {
+            transform: 'translateZ(0) rotate(270deg)',
+          },
+          '100%': {
+            transform: 'translateZ(0) rotate(360deg)',
+          },
+        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
@@ -102,6 +123,8 @@ const config: Config = {
         // The animation is now slower and smoother.
         'gas-glow': 'gas-glow 12s ease-in-out infinite',
         // --- MODIFICATION END ---
+                'shimmer-slide': 'shimmer-slide var(--speed) ease-in-out infinite',
+        'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear',
   		}
   	}
   },

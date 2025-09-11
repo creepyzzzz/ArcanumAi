@@ -124,7 +124,7 @@ export function LeftSidebar({
   if (isCollapsed) {
     return (
       <div 
-        className="flex flex-col h-full items-center justify-between py-4 relative bg-muted/10"
+        className="flex flex-col h-full items-center justify-between py-4 relative bg-sidebar"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ fontSize: fontSizes.general }}
@@ -171,7 +171,7 @@ export function LeftSidebar({
 
   // This is the full, expanded view for both desktop and mobile
   return (
-    <div className="flex flex-col h-full bg-muted/10" style={{ fontSize: fontSizes.general }}>
+    <div className="flex flex-col h-full bg-sidebar" style={{ fontSize: fontSizes.general }}>
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
            <h1 className="text-lg font-semibold">Chats</h1>

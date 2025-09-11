@@ -2,7 +2,7 @@
 
 import { Button } from './ui/button';
 import { FileText, Sparkles, Menu } from 'lucide-react';
-import { ThemeToggle } from './ThemeToggle';
+import { AnimatedThemeToggler } from "@/components/magicui/animated-theme-toggler";
 
 interface TopBarProps {
   showFilesPanel: boolean;
@@ -42,7 +42,7 @@ export function TopBar({
           <span className="hidden sm:inline">Files</span>
         </Button>
         
-        <ThemeToggle />
+        <AnimatedThemeToggler size={20} />
       </div>
     </div>
   );

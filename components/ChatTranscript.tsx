@@ -9,9 +9,10 @@ interface ChatTranscriptProps {
   files: FileRef[];
   isStreaming: boolean;
   onOpenFileInCanvas: (fileId: string) => void;
+  isMobile?: boolean;
 }
 
-export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanvas }: ChatTranscriptProps) {
+export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanvas, isMobile }: ChatTranscriptProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
 
@@ -36,9 +37,9 @@ export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanva
     return (
       // --- MODIFICATION START ---
       // Removed the animated glow div and changed the gradient to a medium red.
-      <div className="relative flex flex-col items-center justify-center h-full text-center overflow-hidden">
-        <h1 className="text-5xl md:text-7xl font-bold font-poppins text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-white bg-[200%_auto] animate-gradient-animation">
-          Arcanum
+      <div className={`relative flex flex-col items-center justify-center text-center overflow-hidden mb-8 ${isMobile ? 'h-full' : ''}`}>
+        <h1 className="text-2xl md:text-5xl font-bold font-poppins text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-white bg-[200%_auto] animate-gradient-animation">
+          Hello user!
         </h1>
       </div>
       // --- MODIFICATION END ---
