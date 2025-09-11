@@ -896,23 +896,21 @@ export default function ChatPage() {
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={showFilesPanel ? 80 : 100} minSize={30}>
               <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel defaultSize={isCanvasOpen ? 50 : 100} minSize={30} style={{ overflow: 'visible' }}>
+                <ResizablePanel defaultSize={isCanvasOpen ? 50 : 100} minSize={30}>
                   <div className="flex flex-col h-full">
                     <TopBar
                       showFilesPanel={showFilesPanel}
                       onToggleFilesPanel={toggleFilesPanel}
                       onToggleSidebar={toggleLeftSidebar}
                     />
-                    <div className={`flex-1 flex flex-col ${messages.length === 0 && !isMobile ? 'justify-center' : ''}`}>
-                      <div className={`${messages.length > 0 || isMobile ? 'flex-1' : ''} overflow-y-auto min-h-0`}>
-                        <ChatTranscript
-                          messages={messages}
-                          files={files}
-                          isStreaming={isStreaming}
-                          onOpenFileInCanvas={handleOpenFileInCanvas}
-                          isMobile={isMobile}
-                        />
-                      </div>
+                    <div className="flex-1 flex flex-col min-h-0">
+                      <ChatTranscript
+                        messages={messages}
+                        files={files}
+                        isStreaming={isStreaming}
+                        onOpenFileInCanvas={handleOpenFileInCanvas}
+                        isMobile={isMobile}
+                      />
                       <div className="flex-shrink-0">
                         <ChatInput
                           onSendMessage={handleSendMessage}
