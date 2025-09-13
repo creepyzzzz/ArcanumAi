@@ -50,8 +50,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        // These headers are crucial for free models on OpenRouter
-        'HTTP-Referer': req.headers.get('origin') || 'https://your-production-url.com',
+        'HTTP-Referer': req.headers.get('referer') || 'http://localhost:3000',
         'X-Title': 'Arcanum AI Chat',
       },
       body: JSON.stringify({

@@ -94,8 +94,8 @@ export class OpenRouterAdapter implements ProviderAdapter {
         headers: {
           'Authorization': `Bearer ${key}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
-          'X-Title': 'AI Chat App'
+          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+          'X-Title': 'Arcanum AI Chat',
         },
         body: JSON.stringify({
           model: opts.model,

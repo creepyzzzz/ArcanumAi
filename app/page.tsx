@@ -918,7 +918,7 @@ export default function ChatPage() {
                         onOpenFileInCanvas={handleOpenFileInCanvas}
                         isMobile={isMobile}
                       />
-                      <div className={`flex-shrink-0 w-full ${messages.length === 0 && !isStreaming ? 'max-w-2xl mx-auto px-4 mt-8' : ''}`}>
+                      <div className={`flex-shrink-0 w-full ${messages.length === 0 && !isStreaming ? (isMobile ? '' : 'max-w-2xl mx-auto px-4 mt-8') : ''}`}>
                         <ChatInput
                           onSendMessage={handleSendMessage}
                           onFileUpload={handleFileUpload}

@@ -55,7 +55,7 @@ export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanva
 
   if (messages.length === 0) {
     return (
-      <div className="text-center">
+      <div className={isMobile ? "flex-1 flex justify-center items-center text-center" : "text-center"}>
         <div>
           <h1 className="text-5xl md:text-5xl font-bold font-poppins text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-white bg-[200%_auto] animate-gradient-animation">
             Hello user!
