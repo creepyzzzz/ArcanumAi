@@ -435,7 +435,8 @@ export default function ChatPage() {
     setChatInputText('');
 
     const placeholderMessage: Message = {
-      id: `thinking-${Date.now()}`, threadId: currentThread.id, role: 'assistant', content: '', createdAt: Date.now()
+      id: `streaming-${Date.now()}`,
+      threadId: currentThread.id, role: 'assistant', content: '', createdAt: Date.now()
     };
     setMessages(prev => [...prev, placeholderMessage]);
 
@@ -472,7 +473,7 @@ export default function ChatPage() {
 
     try {
       const apiMessages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [...messages, userMessage]
-        .filter(m => !m.id.startsWith('thinking'))
+        .filter(m => !m.id.startsWith('streaming'))
         .map(msg => ({ role: msg.role, content: msg.content }));
 
       if (contextSummaryRef.current) {
@@ -522,10 +523,12 @@ export default function ChatPage() {
                   streamedResponseText += content;
                   setMessages(prev => {
                     const newMessages = [...prev];
-                    const lastMessage = newMessages[newMessages.length - 1];
-                    if (lastMessage && (lastMessage.id.startsWith('thinking') || lastMessage.id.startsWith('streaming'))) {
-                      lastMessage.id = `streaming-${Date.now()}`;
-                      lastMessage.content = streamedResponseText;
+                    const lastMessageIndex = newMessages.length - 1;
+                    if (lastMessageIndex >= 0 && newMessages[lastMessageIndex].id.startsWith('streaming')) {
+                      newMessages[lastMessageIndex] = {
+                        ...newMessages[lastMessageIndex],
+                        content: streamedResponseText,
+                      };
                     }
                     return newMessages;
                   });
@@ -576,10 +579,12 @@ export default function ChatPage() {
 
           setMessages(prev => {
             const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && (lastMessage.id.startsWith('thinking') || lastMessage.id.startsWith('streaming'))) {
-              lastMessage.id = `streaming-${Date.now()}`;
-              lastMessage.content = (isCanvasMode && canvasTriggered) ? extractCode(streamedResponseText).intro : streamedResponseText;
+            const lastMessageIndex = newMessages.length - 1;
+            if (lastMessageIndex >= 0 && newMessages[lastMessageIndex].id.startsWith('streaming')) {
+              newMessages[lastMessageIndex] = {
+                ...newMessages[lastMessageIndex],
+                content: (isCanvasMode && canvasTriggered) ? extractCode(streamedResponseText).intro : streamedResponseText,
+              };
             }
             return newMessages;
           });
@@ -607,10 +612,12 @@ export default function ChatPage() {
 
             setMessages(prev => {
               const newMessages = [...prev];
-              const lastMessage = newMessages[newMessages.length - 1];
-              if (lastMessage && (lastMessage.id.startsWith('thinking') || lastMessage.id.startsWith('streaming'))) {
-                lastMessage.id = `streaming-${Date.now()}`;
-                lastMessage.content = (isCanvasMode && canvasTriggered) ? extractCode(streamedResponseText).intro : streamedResponseText;
+              const lastMessageIndex = newMessages.length - 1;
+              if (lastMessageIndex >= 0 && newMessages[lastMessageIndex].id.startsWith('streaming')) {
+                newMessages[lastMessageIndex] = {
+                  ...newMessages[lastMessageIndex],
+                  content: (isCanvasMode && canvasTriggered) ? extractCode(streamedResponseText).intro : streamedResponseText,
+                };
               }
               return newMessages;
             });
@@ -628,11 +635,11 @@ export default function ChatPage() {
         createdAt: Date.now(),
         generatedFileId: generatedFileIdRef.current ?? undefined
       });
-      setMessages(prev => [...prev.filter(m => !m.id.startsWith('thinking') && !m.id.startsWith('streaming')), assistantMessage]);
+      setMessages(prev => [...prev.filter(m => !m.id.startsWith('streaming')), assistantMessage]);
 
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        setMessages(prev => prev.filter(m => !m.id.startsWith('thinking') && !m.id.startsWith('streaming')));
+        setMessages(prev => prev.filter(m => !m.id.startsWith('streaming')));
       } else {
         console.error('Failed to send message:', error);
         const errorMessage: Message = {
@@ -642,7 +649,7 @@ export default function ChatPage() {
           content: `Sorry, something went wrong: ${error instanceof Error ? error.message : 'An unknown error occurred.'}`,
           createdAt: Date.now(),
         };
-        setMessages(prev => [...prev.filter(m => !m.id.startsWith('thinking') && !m.id.startsWith('streaming')), errorMessage]);
+        setMessages(prev => [...prev.filter(m => !m.id.startsWith('streaming')), errorMessage]);
       }
     } finally {
       setIsStreaming(false);
@@ -869,7 +876,7 @@ export default function ChatPage() {
           }}
           className={`
             transition-all duration-300 ease-in-out
-            ${isMobile ? 'absolute h-full z-40 w-4/5 max-w-xs bg-background' : 'relative'}
+            ${isMobile ? 'absolute h-full z-40 w-4/5 max-w-xs bg-background' : 'relative z-30'}
             ${isMobile && isLeftSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
           `}
         >
@@ -903,7 +910,7 @@ export default function ChatPage() {
                       onToggleFilesPanel={toggleFilesPanel}
                       onToggleSidebar={toggleLeftSidebar}
                     />
-                    <div className="flex-1 flex flex-col min-h-0">
+                    <div className={`flex-1 flex flex-col min-h-0 ${messages.length === 0 && !isStreaming ? 'justify-center' : ''}`}>
                       <ChatTranscript
                         messages={messages}
                         files={files}
@@ -911,7 +918,7 @@ export default function ChatPage() {
                         onOpenFileInCanvas={handleOpenFileInCanvas}
                         isMobile={isMobile}
                       />
-                      <div className="flex-shrink-0">
+                      <div className={`flex-shrink-0 w-full ${messages.length === 0 && !isStreaming ? 'max-w-2xl mx-auto px-4 mt-8' : ''}`}>
                         <ChatInput
                           onSendMessage={handleSendMessage}
                           onFileUpload={handleFileUpload}

@@ -142,7 +142,7 @@ export function CanvasDialog() {
               options={{
                 minimap: { enabled: false },
                 fontSize: fontSizes.canvasCodeEditor, // Use canvas code editor font size
-                wordWrap: 'on',
+                wordWrap: 'off',
                 scrollBeyondLastLine: false,
               }}
             />

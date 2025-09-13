@@ -198,7 +198,9 @@ export function ChatInput({
   // };
   // --- MODIFICATION END ---
 
+  // --- FIX: Close file options pop-up when focusing on the input ---
   const handleFocus = () => {
+    if (showOptions) setShowOptions(false);
     isFocusedRef.current = true;
     if (window.innerWidth < 768) {
       setTimeout(() => {
@@ -293,10 +295,10 @@ export function ChatInput({
         className={cn(
           "group relative z-0",
           "[background:var(--bg)]", // Use CSS variable for background
-          "rounded-3xl shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-white/15 transition-all duration-300 flex flex-col focus-within:border-primary dark:focus-within:shadow-primary/30",
-          "dark:glow-effect",
-          isDragging ? "border-primary" : "border-border/50",
-          "border-2", // Keep border style
+          "rounded-3xl shadow-xl shadow-black/10 transition-all duration-300 flex flex-col",
+          "dark:shadow-[0_10px_50px_-10px_rgba(255,255,255,0.2)] dark:focus-within:shadow-[0_10px_50px_-10px_hsla(210,40%,98%,0.4)]",
+          "border-primary",
+          "border-2",
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -329,7 +331,7 @@ export function ChatInput({
                   size="icon"
                   onClick={() => setShowOptions(prev => !prev)}
                   disabled={isStreaming}
-                  className="h-9 w-9"
+                  className="h-9 w-9 rounded-full"
                   >
                   <Plus className={`h-5 w-5 transition-transform duration-200 ${showOptions ? 'rotate-45' : ''}`} />
                   </Button>

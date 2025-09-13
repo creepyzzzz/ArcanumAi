@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -105,21 +105,52 @@ export function LeftSidebar({
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const groupedThreads = useMemo(() => {
+    const groups: { [key: string]: Thread[] } = {};
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
-    return date.toLocaleDateString();
-  };
+    const sortedThreads = [...threads].sort((a, b) => b.updatedAt - a.updatedAt);
 
-  // --- FIX: Logic is now unified for both mobile and desktop ---
-  // The parent `page.tsx` controls the collapsed state via ResizablePanel logic.
-  // This component just needs to render the correct view based on the `isCollapsed` prop.
+    sortedThreads.forEach(thread => {
+      const threadDate = new Date(thread.updatedAt);
+      const threadDay = new Date(threadDate.getFullYear(), threadDate.getMonth(), threadDate.getDate());
+      const diffDays = (today.getTime() - threadDay.getTime()) / (1000 * 60 * 60 * 24);
+
+      let groupKey: string;
+
+      if (diffDays === 0) {
+        groupKey = 'Today';
+      } else if (diffDays === 1) {
+        groupKey = 'Yesterday';
+      } else if (diffDays < 7) {
+        groupKey = 'Last 7 days';
+      } else if (diffDays < 30) {
+        groupKey = 'Last month';
+      } else {
+        groupKey = threadDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(thread);
+    });
+
+    return groups;
+  }, [threads]);
+
+  const groupOrder = ['Today', 'Yesterday', 'Last 7 days', 'Last month'];
+  
+  const monthGroupKeys = Object.keys(groupedThreads)
+    .filter(key => !groupOrder.includes(key))
+    .sort((a, b) => {
+      const dateA = groupedThreads[a][0].updatedAt;
+      const dateB = groupedThreads[b][0].updatedAt;
+      return dateB - dateA;
+    });
+
+  const orderedGroupKeys = [...groupOrder.filter(key => groupedThreads[key]), ...monthGroupKeys];
 
   if (isCollapsed) {
     return (
@@ -169,7 +200,6 @@ export function LeftSidebar({
     );
   }
 
-  // This is the full, expanded view for both desktop and mobile
   return (
     <div className="flex flex-col h-full bg-sidebar" style={{ fontSize: fontSizes.general }}>
       <div className="p-4 space-y-3">
@@ -207,75 +237,78 @@ export function LeftSidebar({
             <p className="text-sm">No conversations yet</p>
           </div>
         ) : (
-          <div className="p-2 space-y-1">
-            {threads.map((thread) => (
-              <div
-                key={thread.id}
-                className={`group relative rounded-xl p-3 cursor-pointer transition-colors ${
-                  selectedThreadId === thread.id
-                    ? 'bg-primary/10 border border-primary/20'
-                    : 'hover:bg-muted/50'
-                }`}
-                onClick={() => onThreadSelect(thread.id)}
-              >
-                {editingThreadId === thread.id ? (
-                  <Input
-                    ref={editInputRef}
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onBlur={finishEditing}
-                    onKeyDown={handleKeyDown}
-                    className="h-6 text-sm rounded-xl"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm truncate">
-                          {thread.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatDate(thread.updatedAt)}
-                        </p>
-                      </div>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => startEditing(thread)}>
-                            <Edit2 className="h-4 w-4 mr-2" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onDuplicateThread(thread.id)}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onExportThread(thread.id, 'json')}>
-                            <Download className="h-4 w-4 mr-2" />
-                            Export JSON
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDeleteThread(thread.id)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+          <div className="p-2">
+            {orderedGroupKeys.map(groupTitle => (
+              <div key={groupTitle} className="mb-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground px-3 py-2">
+                  {groupTitle}
+                </h4>
+                <div className="space-y-1">
+                  {groupedThreads[groupTitle].map((thread) => (
+                    <div
+                      key={thread.id}
+                      className={`group relative rounded-xl p-3 cursor-pointer transition-colors ${
+                        selectedThreadId === thread.id
+                          ? 'bg-primary/10 border border-primary/20'
+                          : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => onThreadSelect(thread.id)}
+                    >
+                      {editingThreadId === thread.id ? (
+                        <Input
+                          ref={editInputRef}
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onBlur={finishEditing}
+                          onKeyDown={handleKeyDown}
+                          className="h-6 text-sm rounded-xl"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-sm truncate flex-1">
+                              {thread.title}
+                            </h3>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreHorizontal className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); startEditing(thread); }}>
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Rename
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onDuplicateThread(thread.id)}>
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Duplicate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onExportThread(thread.id, 'json')}>
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Export JSON
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => onDeleteThread(thread.id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  </>
-                )}
+                  ))}
+                </div>
               </div>
             ))}
           </div>

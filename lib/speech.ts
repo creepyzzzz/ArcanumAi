@@ -55,23 +55,18 @@ export class SpeechService {
     if (!this.recognition || this.isListening) return;
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
+      const last = event.results.length - 1;
+      const result = event.results[last];
+      const transcript = result[0].transcript;
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript;
-        } else {
-          interimTranscript += result[0].transcript;
-        }
-      }
-
-      // --- REFINEMENT: Only send final transcript if it has content ---
-      if (finalTranscript.trim()) {
-        onResult(finalTranscript, true);
-      } else if (interimTranscript.trim()) {
-        onResult(interimTranscript, false);
+      if (result.isFinal) {
+        // When the result is final, we send the full, clean transcript.
+        // We also clear any previous interim transcript from the parent component
+        // by sending an empty interim result first if needed.
+        onResult(transcript, true);
+      } else {
+        // For interim results, we just send the current partial transcript.
+        onResult(transcript, false);
       }
     };
 

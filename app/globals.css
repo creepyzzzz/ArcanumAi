@@ -161,6 +161,11 @@
   @apply bg-transparent p-0;
 }
 
+/* Reset styles for custom code blocks */
+.message-content .code-block-wrapper pre {
+  @apply bg-transparent p-0 rounded-none overflow-visible;
+}
+
 .message-content blockquote {
   @apply border-l-2 border-border pl-4 italic;
 }
@@ -235,16 +240,3 @@
   }
 }
 
-.dark .glow-effect::before {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: 60px;
-    background-image: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(128, 0, 128, 0.2), transparent 70%);
-    filter: blur(20px);
-    z-index: -1;
-    pointer-events: none;
-}

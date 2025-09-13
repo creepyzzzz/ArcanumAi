@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useLayoutEffect } from 'react';
+import { useEffect, useRef, useLayoutEffect, useState } from 'react';
 import ChatMessage from './ChatMessage';
 import { Message, FileRef } from '@/types';
 
@@ -14,28 +14,48 @@ interface ChatTranscriptProps {
 
 export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanvas, isMobile }: ChatTranscriptProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isAtBottomRef = useRef(true);
-
-  useLayoutEffect(() => {
-    const scrollEl = scrollRef.current;
-    if (scrollEl) {
-      const threshold = 100;
-      const isAtBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight < threshold;
-      isAtBottomRef.current = isAtBottom;
-    }
-  }, [messages]);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
 
   useEffect(() => {
-    const scrollEl = scrollRef.current;
-    if (scrollEl && isAtBottomRef.current) {
-      scrollEl.scrollTop = scrollEl.scrollHeight;
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const handleScroll = () => {
+      const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight <= 100;
+      if (isAtBottom) {
+        setUserScrolledUp(false);
+      }
+    };
+
+    const handleInteraction = () => {
+      const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight <= 100;
+      if (!isAtBottom) {
+        setUserScrolledUp(true);
+      }
+    };
+
+    element.addEventListener('scroll', handleScroll);
+    element.addEventListener('wheel', handleInteraction);
+    element.addEventListener('touchmove', handleInteraction);
+
+    return () => {
+      element.removeEventListener('scroll', handleScroll);
+      element.removeEventListener('wheel', handleInteraction);
+      element.removeEventListener('touchmove', handleInteraction);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const element = scrollRef.current;
+    if (element && !userScrolledUp) {
+      element.scrollTop = element.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, userScrolledUp]);
 
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-center">
+      <div className="text-center">
         <div>
           <h1 className="text-5xl md:text-5xl font-bold font-poppins text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-white bg-[200%_auto] animate-gradient-animation">
             Hello user!

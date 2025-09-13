@@ -16,6 +16,7 @@ import {
   FileDown,
 } from 'lucide-react';
 import { PluggableList } from 'unified';
+import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
   message: Message;
@@ -85,7 +86,6 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
   };
 
   const showThinkingAnimation = isLastMessage && isStreaming && message.role === 'assistant' && !message.content && !generatedFile;
-  const showTypingCursor = isLastMessage && isStreaming && message.role === 'assistant' && message.content;
 
   const customComponents: Components = {
     code(props) {
@@ -106,7 +106,7 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
   return (
     <div className={`group flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div className={`flex-1 space-y-2 min-w-0 max-w-full md:max-w-[85%] ${message.role === 'user' ? 'text-right' : ''}`}>
-        <div className={`inline-block max-w-full ${
+        <div className={`inline-block max-w-full ${ 
           message.role === 'user'
             ? 'bg-muted text-foreground rounded-2xl rounded-tr-md px-4 py-3'
             : ''
@@ -124,18 +124,18 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
             {message.role === 'user' ? (
               <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm] as PluggableList}
-                  components={customComponents}
-                >
-                  {message.content + (showTypingCursor ? '▍' : '')}
-                </ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm] as PluggableList}
+                components={customComponents}
+              >
+                {message.content}
+              </ReactMarkdown>
             )}
           </div>
         </div>
 
         {!showThinkingAnimation && (
-          <div className={`flex items-center gap-2 text-xs text-muted-foreground ${
+          <div className={`flex items-center gap-2 text-xs text-muted-foreground ${ 
             message.role === 'user' ? 'justify-end' : 'justify-start'
           }`}>
             {message.role === 'user' && (

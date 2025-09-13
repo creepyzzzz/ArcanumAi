@@ -32,7 +32,7 @@ export function RightPanel({
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="absolute top-0 right-0 h-full w-4/5 max-w-sm z-30 bg-background md:relative md:h-full md:w-auto md:max-w-none md:border-l flex flex-col"
+      className="absolute top-0 right-0 h-full w-4/5 max-w-sm z-30 bg-sidebar md:relative md:h-full md:w-auto md:max-w-none md:border-l flex flex-col"
       style={{ fontSize: fontSizes.general }}
     >
       {/* --- FIX: Unified header with close button for all screen sizes --- */}
