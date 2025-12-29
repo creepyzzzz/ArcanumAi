@@ -52,10 +52,22 @@ export async function POST(req: NextRequest) {
   try {
     const { messages, providerConfig } = await req.json();
     
-    // --- DEBUGGING: Log the received provider configuration ---
-    console.log('--- RECEIVED PROVIDER CONFIG ---');
-    console.log(JSON.stringify(providerConfig, null, 2));
-    console.log('--- END PROVIDER CONFIG ---');
+    // Only log in development, and never log headers which may contain API keys
+    if (process.env.NODE_ENV === 'development') {
+      console.log('--- RECEIVED PROVIDER CONFIG ---');
+      const safeConfig = { ...providerConfig };
+      if (safeConfig.headers) {
+        safeConfig.headers = { ...safeConfig.headers };
+        // Remove sensitive headers
+        Object.keys(safeConfig.headers).forEach(key => {
+          if (key.toLowerCase().includes('authorization') || key.toLowerCase().includes('api-key') || key.toLowerCase().includes('key')) {
+            safeConfig.headers[key] = '[REDACTED]';
+          }
+        });
+      }
+      console.log(JSON.stringify(safeConfig, null, 2));
+      console.log('--- END PROVIDER CONFIG ---');
+    }
 
     if (!providerConfig || !providerConfig.url || !providerConfig.headers || !providerConfig.body) {
       return NextResponse.json({ error: 'Missing or invalid provider configuration' }, { status: 400 });
@@ -67,10 +79,12 @@ export async function POST(req: NextRequest) {
       stream: true,          // Always enable streaming for the chat UI
     };
 
-    // --- DEBUGGING: Log the final request body being sent to the upstream API ---
-    console.log('--- SENDING REQUEST BODY TO UPSTREAM API ---');
-    console.log(JSON.stringify(requestBody, null, 2));
-    console.log('--- END REQUEST BODY ---');
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('--- SENDING REQUEST BODY TO UPSTREAM API ---');
+      console.log(JSON.stringify(requestBody, null, 2));
+      console.log('--- END REQUEST BODY ---');
+    }
 
     const response = await fetch(providerConfig.url, {
       method: 'POST',
