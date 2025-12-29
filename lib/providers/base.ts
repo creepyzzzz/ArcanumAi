@@ -25,7 +25,7 @@ export interface ProviderAdapter {
   id: string;
   displayName: string;
   needsKey: boolean;
-  models: { id: string; label: string }[];
+  models: { id: string; label: string; supportsReasoning?: boolean }[];
   sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }>;
 }
 
