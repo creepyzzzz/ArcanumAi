@@ -11,9 +11,10 @@ interface ChatTranscriptProps {
   isStreaming: boolean;
   onOpenFileInCanvas: (fileId: string) => void;
   isMobile?: boolean;
+  supportsReasoning?: boolean;
 }
 
-export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanvas, isMobile }: ChatTranscriptProps) {
+export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanvas, isMobile, supportsReasoning }: ChatTranscriptProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
 
@@ -89,6 +90,7 @@ export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanva
               isLastMessage={index === messages.length - 1}
               isStreaming={isStreaming && index === messages.length - 1}
               onOpenFileInCanvas={onOpenFileInCanvas}
+              supportsReasoning={supportsReasoning}
             />
           </motion.div>
         ))}
