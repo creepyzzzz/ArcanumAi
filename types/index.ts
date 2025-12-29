@@ -27,6 +27,7 @@ export interface Message {
   attachmentIds?: string[];
   generatedFileId?: string;
   metadata?: Record<string, any>;
+  reasoning?: string; // To store the model's reasoning
 }
 
 /**

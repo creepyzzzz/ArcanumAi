@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import { motion } from 'framer-motion';
 
 interface MessageAttachmentsProps {
   files: FileRef[];
@@ -96,22 +97,31 @@ export function MessageAttachments({ files }: MessageAttachmentsProps) {
 
   return (
     <div className="mb-2 flex flex-wrap gap-2">
-      {files.map((file) => (
+      {files.map((file, index) => (
         // --- MODIFICATION START ---
         // Redesigned the file attachment into a compact, clickable "chip".
         // The entire element is now the trigger for the preview dialog.
         <Dialog key={file.id}>
           <DialogTrigger asChild>
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border max-w-[250px] sm:max-w-xs cursor-pointer hover:bg-muted/75 transition-colors"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border max-w-[250px] sm:max-w-xs cursor-pointer hover:bg-muted/75 transition-all duration-200"
             >
-              <div className="flex-shrink-0 text-muted-foreground">
+              <motion.div
+                whileHover={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.3 }}
+                className="flex-shrink-0 text-muted-foreground"
+              >
                 {getFileIcon(file)}
-              </div>
+              </motion.div>
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{file.name}</p>
               </div>
-            </div>
+            </motion.div>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
             <DialogHeader>

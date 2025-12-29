@@ -1,4 +1,4 @@
-import { ProviderAdapter, ChatMessage } from './base';
+import { ProviderAdapter, ChatMessage, ChatOptions } from './base';
 
 export class AnthropicAdapter implements ProviderAdapter {
   id = 'anthropic';
@@ -11,13 +11,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     { id: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
   ];
 
-  async sendChat(opts: {
-    apiKey?: string;
-    model: string;
-    messages: ChatMessage[];
-    stream?: (chunk: string) => void;
-    abortSignal?: AbortSignal;
-  }): Promise<{ text: string }> {
+  async sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }> {
     const response = await fetch('/api/relay/anthropic', {
       method: 'POST',
       headers: {
@@ -29,7 +23,7 @@ export class AnthropicAdapter implements ProviderAdapter {
         messages: opts.messages,
         stream: !!opts.stream
       }),
-      signal: opts.abortSignal
+      signal: opts.signal
     });
 
     if (!response.ok) {
@@ -60,7 +54,9 @@ export class AnthropicAdapter implements ProviderAdapter {
                   const content = parsed.delta?.text;
                   if (content) {
                     fullText += content;
-                    opts.stream(content);
+                    if (opts.stream) {
+                      opts.stream(content, '');
+                    }
                   }
                 }
               } catch (e) {

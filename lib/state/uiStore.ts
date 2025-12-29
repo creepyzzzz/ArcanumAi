@@ -1,9 +1,15 @@
 import { create } from 'zustand';
 import { Storage, FontSizes } from '@/lib/storage';
 
+interface ProviderModels {
+  [key: string]: string[];
+}
+
 interface UiState {
   fontSizes: FontSizes;
+  providerModels: ProviderModels;
   setFontSize: (key: keyof FontSizes, value: number) => void;
+  setProviderModels: (providerModels: ProviderModels) => void;
   loadInitialPreferences: () => void;
 }
 
@@ -16,6 +22,7 @@ export const useUiStore = create<UiState>((set) => ({
     canvasCodePreview: 14,
     canvasCodeEditor: 14,
   },
+  providerModels: {},
   setFontSize: (key, value) => {
     set((state) => {
       const newFontSizes = { ...state.fontSizes, [key]: value };
@@ -24,8 +31,15 @@ export const useUiStore = create<UiState>((set) => ({
       return { fontSizes: newFontSizes };
     });
   },
+  setProviderModels: (providerModels) => {
+    set(() => {
+      const currentPrefs = Storage.getPreferences();
+      Storage.setPreferences({ ...currentPrefs, providerModels });
+      return { providerModels };
+    });
+  },
   loadInitialPreferences: () => {
     const prefs = Storage.getPreferences();
-    set({ fontSizes: prefs.fontSizes });
+    set({ fontSizes: prefs.fontSizes, providerModels: prefs.providerModels || {} });
   },
 }));

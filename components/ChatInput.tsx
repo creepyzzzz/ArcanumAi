@@ -260,8 +260,13 @@ export function ChatInput({
         <div className="mb-2">
           <div className="flex flex-wrap gap-2">
             {attachedFiles.map((file, index) => (
-              <div
+              <motion.div
                 key={`${file.name}-${index}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                whileHover={{ scale: 1.05 }}
                 className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg text-sm"
               >
                 {getFileIcon(file)}
@@ -269,15 +274,21 @@ export function ChatInput({
                 <span className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 ml-1"
-                  onClick={() => removeFile(index)}
+                <motion.div
+                  whileHover={{ scale: 1.2, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 ml-1"
+                    onClick={() => removeFile(index)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </motion.div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -325,16 +336,27 @@ export function ChatInput({
           
           <div className="col-start-1 row-start-1 self-end h-12 flex items-center gap-1 px-3 pointer-events-none">
               <div className="relative pointer-events-auto flex items-center gap-1">
-                  <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowOptions(prev => !prev)}
-                  disabled={isStreaming}
-                  className="h-9 w-9 rounded-full"
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
                   >
-                  <Plus className={`h-5 w-5 transition-transform duration-200 ${showOptions ? 'rotate-45' : ''}`} />
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowOptions(prev => !prev)}
+                      disabled={isStreaming}
+                      className="h-9 w-9 rounded-full"
+                    >
+                      <motion.div
+                        animate={{ rotate: showOptions ? 45 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Plus className="h-5 w-5" />
+                      </motion.div>
+                    </Button>
+                  </motion.div>
                   {/* --- MODIFICATION START --- */}
                   {/* The Canvas button has been removed, and the animation and styling */}
                   {/* for the remaining File button have been updated for a cleaner look. */}
@@ -347,14 +369,25 @@ export function ChatInput({
                       transition={{ duration: 0.15 }}
                       className="absolute bottom-full mb-2"
                       >
-                      <Button 
-                        type="button" 
-                        className="gap-2 rounded-full shadow-lg" 
-                        onClick={() => fileInputRef.current?.click()}
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
                       >
-                          <Paperclip className="h-4 w-4" />
-                          File
-                      </Button>
+                        <Button 
+                          type="button" 
+                          className="gap-2 rounded-full shadow-lg" 
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                            <motion.div
+                              whileHover={{ rotate: [0, -10, 10, 0] }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Paperclip className="h-4 w-4" />
+                            </motion.div>
+                            File
+                        </Button>
+                      </motion.div>
                       </motion.div>
                   )}
                   </AnimatePresence>
@@ -373,20 +406,31 @@ export function ChatInput({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={onEnhancePrompt}
-                          disabled={!text.trim() || isEnhancing || isStreaming}
-                          className="h-9 w-9"
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
                         >
-                          {isEnhancing ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-5 w-5" />
-                          )}
-                        </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={onEnhancePrompt}
+                            disabled={!text.trim() || isEnhancing || isStreaming}
+                            className="h-9 w-9"
+                          >
+                            {isEnhancing ? (
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <motion.div
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+                              >
+                                <Sparkles className="h-5 w-5" />
+                              </motion.div>
+                            )}
+                          </Button>
+                        </motion.div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Enhance Prompt</p>
@@ -398,9 +442,13 @@ export function ChatInput({
                   {isClient && SpeechService.isSupported() && (
                       <Tooltip>
                       <TooltipTrigger asChild>
-                          <div
-                          onClick={toggleSpeech}
-                          className={`h-9 w-9 rounded-full flex items-center justify-center cursor-pointer transition-colors ${ isStreaming ? 'cursor-not-allowed' : isListening ? 'bg-red-500/10' : 'hover:bg-muted'}`}
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            animate={isListening ? { scale: [1, 1.1, 1] } : {}}
+                            transition={{ duration: 0.3, repeat: isListening ? Infinity : 0 }}
+                            onClick={toggleSpeech}
+                            className={`h-9 w-9 rounded-full flex items-center justify-center cursor-pointer transition-colors ${ isStreaming ? 'cursor-not-allowed' : isListening ? 'bg-red-500/10' : 'hover:bg-muted'}`}
                           >
                           {isListening ? (
                               <canvas
@@ -411,7 +459,7 @@ export function ChatInput({
                           ) : (
                               <Mic className="h-5 w-5" />
                           )}
-                          </div>
+                          </motion.div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
@@ -426,14 +474,21 @@ export function ChatInput({
                   <TooltipProvider>
                       <Tooltip>
                       <TooltipTrigger asChild>
-                          <Button
-                          type="button"
-                          size="icon"
-                          onClick={onStopGenerating}
-                          className="h-9 w-9 bg-destructive text-destructive-foreground rounded-full"
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
                           >
-                          <Square className="h-5 w-5" />
-                          </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              onClick={onStopGenerating}
+                              className="h-9 w-9 bg-destructive text-destructive-foreground rounded-full"
+                            >
+                              <Square className="h-5 w-5" />
+                            </Button>
+                          </motion.div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Stop generating</p>
@@ -441,14 +496,20 @@ export function ChatInput({
                       </Tooltip>
                   </TooltipProvider>
                   ) : (
-                  <Button
-                      type="submit"
-                      size="icon"
-                      disabled={!canSend}
-                      className="h-9 w-9 bg-primary text-primary-foreground rounded-full"
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                      <Send className="h-5 w-5" />
-                  </Button>
+                    <Button
+                        type="submit"
+                        size="icon"
+                        disabled={!canSend}
+                        className="h-9 w-9 bg-primary text-primary-foreground rounded-full"
+                    >
+                        <Send className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
                   )}
               </div>
           </div>

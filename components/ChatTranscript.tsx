@@ -3,6 +3,7 @@
 import { useEffect, useRef, useLayoutEffect, useState } from 'react';
 import ChatMessage from './ChatMessage';
 import { Message, FileRef } from '@/types';
+import { motion } from 'framer-motion';
 
 interface ChatTranscriptProps {
   messages: Message[];
@@ -72,14 +73,24 @@ export function ChatTranscript({ messages, files, isStreaming, onOpenFileInCanva
     >
       <div className="mx-auto w-full max-w-4xl space-y-6">
         {messages.map((message, index) => (
-          <ChatMessage
+          <motion.div
             key={message.id}
-            message={message}
-            files={files}
-            isLastMessage={index === messages.length - 1}
-            isStreaming={isStreaming && index === messages.length - 1}
-            onOpenFileInCanvas={onOpenFileInCanvas}
-          />
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              duration: 0.3, 
+              ease: 'easeOut',
+              delay: index * 0.05 
+            }}
+          >
+            <ChatMessage
+              message={message}
+              files={files}
+              isLastMessage={index === messages.length - 1}
+              isStreaming={isStreaming && index === messages.length - 1}
+              onOpenFileInCanvas={onOpenFileInCanvas}
+            />
+          </motion.div>
         ))}
       </div>
     </div>

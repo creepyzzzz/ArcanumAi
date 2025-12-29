@@ -1,4 +1,4 @@
-import { ProviderAdapter, ChatMessage } from './base';
+import { ProviderAdapter, ChatMessage, ChatOptions } from './base';
 
 export class MistralAdapter implements ProviderAdapter {
   id = 'mistral';
@@ -13,13 +13,7 @@ export class MistralAdapter implements ProviderAdapter {
     { id: 'mistral-small-latest', label: 'Mistral Small' },
   ];
 
-  async sendChat(opts: {
-    apiKey?: string;
-    model: string;
-    messages: ChatMessage[];
-    stream?: (chunk: string) => void;
-    abortSignal?: AbortSignal;
-  }): Promise<{ text: string }> {
+  async sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }> {
     const response = await fetch('/api/relay/mistral', {
       method: 'POST',
       headers: {
@@ -31,7 +25,7 @@ export class MistralAdapter implements ProviderAdapter {
         messages: opts.messages,
         stream: !!opts.stream
       }),
-      signal: opts.abortSignal
+      signal: opts.signal
     });
 
     if (!response.ok) {
@@ -61,7 +55,9 @@ export class MistralAdapter implements ProviderAdapter {
                 const content = parsed.choices?.[0]?.delta?.content;
                 if (content) {
                   fullText += content;
-                  opts.stream(content);
+                  if (opts.stream) {
+                    opts.stream(content, '');
+                  }
                 }
               } catch (e) {
                 // Ignore parsing errors

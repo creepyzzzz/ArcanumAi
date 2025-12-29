@@ -12,30 +12,21 @@ export type ChatMessage = {
   }[];
 };
 
-// --- MODIFICATION START ---
-// Create a dedicated interface for chat options.
-// This makes the code cleaner and ensures all providers
-// have the same set of available options.
 export interface ChatOptions {
   apiKey?: string;
   model: string;
   messages: ChatMessage[];
-  stream?: (chunk: string) => void;
-  signal?: AbortSignal; // Officially add the signal property here
-  attachments?: Attachment[]; // NEW: Add optional attachments property
+  stream?: (chunk: string, reasoningChunk: string) => void;
+  signal?: AbortSignal;
+  attachments?: Attachment[];
 }
-// --- MODIFICATION END ---
-
 
 export interface ProviderAdapter {
   id: string;
   displayName: string;
   needsKey: boolean;
   models: { id: string; label: string }[];
-  // --- MODIFICATION START ---
-  // Update sendChat to use the new ChatOptions interface.
-  sendChat(opts: ChatOptions): Promise<{ text: string }>;
-  // --- MODIFICATION END ---
+  sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }>;
 }
 
 export type ProviderId = 'openrouter' | 'openai' | 'anthropic' | 'gemini' | 'mistral' | 'groq' | 'mock';

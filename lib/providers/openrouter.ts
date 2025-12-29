@@ -30,7 +30,7 @@ export class OpenRouterAdapter implements ProviderAdapter {
     return key;
   }
 
-  async sendChat(opts: ChatOptions): Promise<{ text: string }> {
+  async sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }> {
     if (!opts.apiKey) {
       throw new Error('API key required for OpenRouter');
     }
@@ -144,7 +144,9 @@ export class OpenRouterAdapter implements ProviderAdapter {
                 const content = parsed.choices?.[0]?.delta?.content;
                 if (content) {
                   fullText += content;
-                  opts.stream(content);
+                  if (opts.stream) {
+                    opts.stream(content, '');
+                  }
                 }
               } catch (e) {
                 // Ignore parsing errors for incomplete JSON chunks
@@ -152,6 +154,8 @@ export class OpenRouterAdapter implements ProviderAdapter {
             }
           }
         }
+      } catch (e) {
+        // Ignore parsing errors for incomplete JSON chunks
       } finally {
         reader.releaseLock();
       }

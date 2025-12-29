@@ -14,6 +14,7 @@ import {
   Download,
   Calendar
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface FilesPanelProps {
   files: FileRef[];
@@ -97,14 +98,36 @@ export function FilesPanel({ files, onFileRemove, onFileSelect }: FilesPanelProp
     <div className="h-full flex flex-col">
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {files.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
-            <FileIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="p-4 text-center text-muted-foreground"
+          >
+            <motion.div
+              animate={{ 
+                scale: [1, 1.05, 1],
+                opacity: [0.5, 0.7, 0.5]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+            >
+              <FileIcon className="h-8 w-8 mx-auto mb-2" />
+            </motion.div>
             <p className="text-sm">No files attached</p>
-          </div>
+          </motion.div>
         ) : (
           <div className="p-4 space-y-6">
-            {Object.entries(groupedFiles).map(([date, dateFiles]) => (
-              <div key={date}>
+            {Object.entries(groupedFiles).map(([date, dateFiles], dateIndex) => (
+              <motion.div
+                key={date}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: dateIndex * 0.1 }}
+              >
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm font-medium text-muted-foreground">
@@ -113,10 +136,19 @@ export function FilesPanel({ files, onFileRemove, onFileSelect }: FilesPanelProp
                 </div>
 
                 <div className="space-y-2">
-                  {dateFiles.map((file) => (
-                    <div
+                  {dateFiles.map((file, fileIndex) => (
+                    <motion.div
                       key={file.id}
-                      className="group border rounded-lg p-3 hover:bg-muted/30 transition-colors"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.2, 
+                        delay: (dateIndex * 0.1) + (fileIndex * 0.05),
+                        ease: 'easeOut'
+                      }}
+                      whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group border rounded-lg p-3 hover:bg-muted/30 transition-all duration-200"
                     >
                       {getFileCategory(file.type) === 'image' && fileContents[file.id] && (
                         <div className="mb-2">
@@ -148,48 +180,70 @@ export function FilesPanel({ files, onFileRemove, onFileSelect }: FilesPanelProp
                           )}
                         </div>
 
-                        <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onFileSelect(file.id);
-                            }}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1 }}
+                          className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
                           >
-                            <Eye className="h-3 w-3" />
-                          </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onFileSelect(file.id);
+                              }}
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          </motion.div>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              downloadFile(file);
-                            }}
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
                           >
-                            <Download className="h-3 w-3" />
-                          </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadFile(file);
+                              }}
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          </motion.div>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onFileRemove(file.id);
-                            }}
+                          <motion.div
+                            whileHover={{ scale: 1.1, rotate: 15 }}
+                            whileTap={{ scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
                           >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onFileRemove(file.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </motion.div>
+                        </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}

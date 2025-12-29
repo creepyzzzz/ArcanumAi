@@ -85,17 +85,7 @@ class CustomAdapter implements ProviderAdapter {
   }
 }
 
-const defaultProviders: ProviderAdapter[] = [
-  new BuiltInAdapter(),
-  new OpenRouterAdapter(),
-  new OpenAIAdapter(),
-  new AnthropicAdapter(),
-  new GeminiAdapter(),
-  new MistralAdapter(),
-  new GroqAdapter(),
-];
-
-const defaultModel = 'builtin:mistral-7b-instruct';
+const defaultModel = 'builtin:xiaomi/mimo-v2-flash:free';
 type ApiKeys = { [key: string]: any };
 
 export default function ChatPage() {
@@ -109,7 +99,15 @@ export default function ChatPage() {
   const [currentModel, setCurrentModel] = useState(defaultModel);
   const [providerModels, setProviderModels] = useState<{ [key: string]: string[] }>({});
   const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(true);
-  const [masterProviders, setMasterProviders] = useState<ProviderAdapter[]>(defaultProviders);
+  const [masterProviders, setMasterProviders] = useState<ProviderAdapter[]>(() => [
+    new BuiltInAdapter(),
+    new OpenRouterAdapter(),
+    new OpenAIAdapter(),
+    new AnthropicAdapter(),
+    new GeminiAdapter(),
+    new MistralAdapter(),
+    new GroqAdapter(),
+  ]);
 
   const [chatInputText, setChatInputText] = useState('');
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -436,7 +434,7 @@ export default function ChatPage() {
 
     const placeholderMessage: Message = {
       id: `streaming-${Date.now()}`,
-      threadId: currentThread.id, role: 'assistant', content: '', createdAt: Date.now()
+      threadId: currentThread.id, role: 'assistant', content: '', createdAt: Date.now(), reasoning: ''
     };
     setMessages(prev => [...prev, placeholderMessage]);
 
@@ -468,6 +466,7 @@ export default function ChatPage() {
     const [providerId, modelId] = currentModel.split(':');
     const apiKeys = Storage.getApiKeys() as ApiKeys;
     let streamedResponseText = '';
+    let streamedReasoningText = '';
     let canvasTriggered = false;
     abortControllerRef.current = new AbortController();
 
@@ -519,20 +518,25 @@ export default function ChatPage() {
               try {
                 const parsed = JSON.parse(data);
                 const content = parsed.choices?.[0]?.delta?.content;
+                const reasoning = parsed.choices?.[0]?.delta?.reasoning;
                 if (content) {
                   streamedResponseText += content;
-                  setMessages(prev => {
-                    const newMessages = [...prev];
-                    const lastMessageIndex = newMessages.length - 1;
-                    if (lastMessageIndex >= 0 && newMessages[lastMessageIndex].id.startsWith('streaming')) {
-                      newMessages[lastMessageIndex] = {
-                        ...newMessages[lastMessageIndex],
-                        content: streamedResponseText,
-                      };
-                    }
-                    return newMessages;
-                  });
                 }
+                if (reasoning) {
+                  streamedReasoningText += reasoning;
+                }
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastMessageIndex = newMessages.length - 1;
+                  if (lastMessageIndex >= 0 && newMessages[lastMessageIndex].id.startsWith('streaming')) {
+                    newMessages[lastMessageIndex] = {
+                      ...newMessages[lastMessageIndex],
+                      content: streamedResponseText,
+                      reasoning: streamedReasoningText,
+                    };
+                  }
+                  return newMessages;
+                });
               } catch (e) {
                 // Ignore parsing errors
               }
@@ -593,14 +597,20 @@ export default function ChatPage() {
         const provider = masterProviders.find(p => p.id === providerId);
         if (!provider) throw new Error(`Provider not found: ${providerId}`);
 
+        let streamedReasoningText = '';
         const result = await provider.sendChat({
           apiKey: apiKeys[providerId],
           model: modelId,
           messages: apiMessages,
           attachments,
           signal: abortControllerRef.current.signal,
-          stream: (chunk) => {
-            streamedResponseText += chunk;
+          stream: (chunk, reasoningChunk) => {
+            if (chunk) {
+              streamedResponseText += chunk;
+            }
+            if (reasoningChunk) {
+              streamedReasoningText += reasoningChunk;
+            }
 
             if (isCanvasMode && !canvasTriggered) {
               const { trigger } = checkHeuristics(streamedResponseText);
@@ -617,6 +627,7 @@ export default function ChatPage() {
                 newMessages[lastMessageIndex] = {
                   ...newMessages[lastMessageIndex],
                   content: (isCanvasMode && canvasTriggered) ? extractCode(streamedResponseText).intro : streamedResponseText,
+                  reasoning: streamedReasoningText,
                 };
               }
               return newMessages;
@@ -624,6 +635,7 @@ export default function ChatPage() {
           }
         });
         streamedResponseText = streamedResponseText || result.text;
+        streamedReasoningText = streamedReasoningText || result.reasoning || '';
       }
 
       const finalText = (isCanvasMode && canvasTriggered) ? extractCode(streamedResponseText).intro : streamedResponseText;
@@ -633,7 +645,8 @@ export default function ChatPage() {
         role: 'assistant',
         content: finalText,
         createdAt: Date.now(),
-        generatedFileId: generatedFileIdRef.current ?? undefined
+        generatedFileId: generatedFileIdRef.current ?? undefined,
+        reasoning: streamedReasoningText,
       });
       setMessages(prev => [...prev.filter(m => !m.id.startsWith('streaming')), assistantMessage]);
 
@@ -832,6 +845,11 @@ export default function ChatPage() {
     ? threads.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : threads;
 
+  const [providerId, modelId] = currentModel.split(':');
+  const provider = availableProviders.find(p => p.id === providerId);
+  const model = provider?.models.find(m => m.id === modelId);
+  const supportsReasoning = model?.supportsReasoning;
+
   if (!isClient) {
     return (
       <div className="flex h-dvh w-full items-center justify-center">
@@ -917,6 +935,7 @@ export default function ChatPage() {
                         isStreaming={isStreaming}
                         onOpenFileInCanvas={handleOpenFileInCanvas}
                         isMobile={isMobile}
+                        supportsReasoning={supportsReasoning}
                       />
                       <div className={`flex-shrink-0 w-full ${messages.length === 0 && !isStreaming ? (isMobile ? '' : 'max-w-2xl mx-auto px-4 mt-8') : ''}`}>
                         <ChatInput

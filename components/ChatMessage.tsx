@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { PluggableList } from 'unified';
 import { cn } from "@/lib/utils";
+import { Reasoning, ReasoningContent, ReasoningTrigger } from "./magicui/reasoning";
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ChatMessageProps {
   message: Message;
@@ -24,9 +26,10 @@ interface ChatMessageProps {
   isLastMessage: boolean;
   isStreaming: boolean;
   onOpenFileInCanvas: (fileId: string) => void;
+  supportsReasoning?: boolean;
 }
 
-const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInCanvas }: ChatMessageProps) => {
+const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInCanvas, supportsReasoning }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const messageContentRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +88,7 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
     });
   };
 
-  const showThinkingAnimation = isLastMessage && isStreaming && message.role === 'assistant' && !message.content && !generatedFile;
+  const showThinkingAnimation = isLastMessage && isStreaming && message.role === 'assistant';
 
   const customComponents: Components = {
     code(props) {
@@ -103,6 +106,8 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
     },
   };
 
+  const showReasoningComponent = supportsReasoning && message.role === 'assistant' && message.hasOwnProperty('reasoning');
+
   return (
     <div className={`group flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div className={`flex-1 space-y-2 min-w-0 max-w-full md:max-w-[85%] ${message.role === 'user' ? 'text-right' : ''}`}>
@@ -113,10 +118,34 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
         }`}>
           {attachedFiles.length > 0 && <MessageAttachments files={attachedFiles} />}
 
-          {showThinkingAnimation && (
+          {showThinkingAnimation && !showReasoningComponent && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Sparkles className="h-5 w-5 animate-pulse" />
               <span>Thinking...</span>
+            </div>
+          )}
+
+          {showReasoningComponent && (
+            <div className="mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Reasoning isStreaming={isStreaming && isLastMessage}>
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
+                  <ReasoningTrigger>
+                    <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
+                      {isStreaming && isLastMessage ? (
+                        <>
+                          <Sparkles className="h-5 w-5" />
+                          <span>Thinking...</span>
+                        </>
+                      ) : (
+                        <span>Show Reasoning</span>
+                      )}
+                    </div>
+                  </ReasoningTrigger>
+                  <ReasoningContent markdown>
+                    {message.reasoning}
+                  </ReasoningContent>
+                </div>
+              </Reasoning>
             </div>
           )}
 
@@ -140,9 +169,37 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
           }`}>
             {message.role === 'user' && (
               <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(message.content)}>
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                </Button>
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  animate={{ scale: copied ? [1, 1.1, 1] : 1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(message.content)}>
+                    <AnimatePresence mode="wait">
+                      {copied ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.8, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Check className="h-3 w-3" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.8, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                </motion.div>
               </div>
             )}
 
@@ -150,9 +207,37 @@ const ChatMessage = ({ message, files, isLastMessage, isStreaming, onOpenFileInC
 
             {message.role === 'assistant' && !isStreaming && (
               <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(message.content)}>
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                </Button>
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  animate={{ scale: copied ? [1, 1.1, 1] : 1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(message.content)}>
+                    <AnimatePresence mode="wait">
+                      {copied ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.8, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Check className="h-3 w-3" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.8, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                </motion.div>
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={downloadAsMarkdown}>
                   <FileDown className="h-3 w-3" />
                 </Button>

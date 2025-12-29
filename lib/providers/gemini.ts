@@ -6,11 +6,11 @@ export class GeminiAdapter implements ProviderAdapter {
   needsKey = true;
   
   models = [
-    { id: 'gemini-1.5-flash-latest', label: 'Gemini 1.5 Flash' },
-    { id: 'gemini-pro-vision', label: 'Gemini Pro Vision' },
+    { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)' },
   ];
 
-  async sendChat(opts: ChatOptions): Promise<{ text: string }> {
+  async sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }> {
     const response = await fetch('/api/relay/gemini', {
       method: 'POST',
       headers: {
@@ -45,7 +45,9 @@ export class GeminiAdapter implements ProviderAdapter {
         
         const chunk = decoder.decode(value, { stream: true });
         fullText += chunk;
-        opts.stream(chunk);
+        if (opts.stream) {
+            opts.stream(chunk, '');
+        }
       }
       
       return { text: fullText };

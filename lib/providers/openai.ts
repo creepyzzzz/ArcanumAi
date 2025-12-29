@@ -1,4 +1,4 @@
-import { ProviderAdapter, ChatMessage } from './base';
+import { ProviderAdapter, ChatMessage, ChatOptions } from './base';
 
 export class OpenAIAdapter implements ProviderAdapter {
   id = 'openai';
@@ -11,13 +11,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
   ];
 
-  async sendChat(opts: {
-    apiKey?: string;
-    model: string;
-    messages: ChatMessage[];
-    stream?: (chunk: string) => void;
-    abortSignal?: AbortSignal;
-  }): Promise<{ text: string }> {
+  async sendChat(opts: ChatOptions): Promise<{ text: string; reasoning?: string }> {
     const response = await fetch('/api/relay/openai', {
       method: 'POST',
       headers: {
@@ -29,7 +23,7 @@ export class OpenAIAdapter implements ProviderAdapter {
         messages: opts.messages,
         stream: !!opts.stream
       }),
-      signal: opts.abortSignal
+      signal: opts.signal
     });
 
     if (!response.ok) {
@@ -59,7 +53,9 @@ export class OpenAIAdapter implements ProviderAdapter {
                 const content = parsed.choices?.[0]?.delta?.content;
                 if (content) {
                   fullText += content;
-                  opts.stream(content);
+                  if (opts.stream) {
+                    opts.stream(content, '');
+                  }
                 }
               } catch (e) {
                 // Ignore parsing errors

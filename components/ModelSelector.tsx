@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,8 @@ import { SettingsDialog } from './SettingsDialog';
 import { Storage } from '@/lib/storage';
 import { ProviderAdapter } from '@/lib/providers/base';
 import { ChevronDown, Settings, AlertCircle, Loader2 } from 'lucide-react';
+import { useUiStore } from '@/lib/state/uiStore';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const openRouterModelGroups = [
   {
@@ -22,7 +24,7 @@ const openRouterModelGroups = [
   },
   {
     label: 'Multimodal Specialists',
-    models: ['qwen/qwen-2.5-vl-72b-instruct', 'google/gemini-flash-2.0-experimental']
+    models: ['qwen/qwen-2.5-vl-72b-instruct', 'google/gemini-2.5-flash']
   },
   {
     label: 'Everyday Workhorses',
@@ -47,6 +49,8 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const [showMissingKeyWarning, setShowMissingKeyWarning] = useState(false);
   const [keyUpdate, setKeyUpdate] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const { providerModels } = useUiStore();
 
   useEffect(() => {
     const handleKeysUpdate = () => {
@@ -59,15 +63,28 @@ export function ModelSelector({
     };
   }, []);
 
+  const availableProviders = useMemo(() => {
+    return providers.map(provider => {
+      const enabledModels = providerModels[provider.id];
+      if (enabledModels === undefined) {
+        return provider;
+      }
+      return {
+        ...provider,
+        models: provider.models.filter(model => enabledModels.includes(model.id)),
+      };
+    }).filter(provider => provider.models.length > 0);
+  }, [providers, providerModels]);
+
   const separatorIndex = selectedModel.indexOf(':');
   const providerId = selectedModel.substring(0, separatorIndex);
   const modelId = selectedModel.substring(separatorIndex + 1);
-  const selectedProvider = providers.find(p => p.id === providerId);
+  const selectedProvider = availableProviders.find(p => p.id === providerId);
   const selectedModelName = selectedProvider?.models.find(m => m.id === modelId)?.label || 'Unknown Model';
 
   const handleModelSelect = (newModelId: string) => {
     const [newProviderId] = newModelId.split(':');
-    const provider = providers.find(p => p.id === newProviderId);
+    const provider = availableProviders.find(p => p.id === newProviderId);
     
     if (provider?.needsKey) {
       const apiKeys = Storage.getApiKeys();
@@ -85,7 +102,7 @@ export function ModelSelector({
 
   return (
     <div className="flex items-center gap-2">
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           {/* --- MODIFICATION START --- */}
           {/* Further compacted the button for mobile screens */}
@@ -99,14 +116,19 @@ export function ModelSelector({
             {isSummarizing ? (
               <Loader2 className="h-3 w-3 flex-shrink-0 animate-spin" />
             ) : (
-              <ChevronDown className="h-3 w-3 flex-shrink-0" />
+              <motion.div
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
+                <ChevronDown className="h-3 w-3 flex-shrink-0" />
+              </motion.div>
             )}
           </Button>
           {/* --- MODIFICATION END --- */}
         </DropdownMenuTrigger>
         
         <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
-          {providers.map((provider, providerIndex) => {
+          {availableProviders.map((provider, providerIndex) => {
             const hasKeyForProvider = !provider.needsKey || !!apiKeys[provider.id];
 
             if (provider.id === 'openrouter') {
@@ -157,7 +179,7 @@ export function ModelSelector({
                        ))}
                      </>
                   )}
-                  {providerIndex < providers.length - 1 && <DropdownMenuSeparator className="my-1" />}
+                  {providerIndex < availableProviders.length - 1 && <DropdownMenuSeparator className="my-1" />}
                 </div>
               );
             }
@@ -178,7 +200,7 @@ export function ModelSelector({
                     {!hasKeyForProvider && <AlertCircle className="h-4 w-4 text-yellow-500" />}
                   </DropdownMenuItem>
                 ))}
-                {providerIndex < providers.length - 1 && <DropdownMenuSeparator className="my-1" />}
+                {providerIndex < availableProviders.length - 1 && <DropdownMenuSeparator className="my-1" />}
               </div>
             );
           })}

@@ -115,10 +115,9 @@ export function SettingsDialog({ providers, asIcon = false }: SettingsDialogProp
   const [importFormat, setImportFormat] = useState<'auto' | 'json' | 'curl' | 'python' | 'nodejs'>('auto');
   const [importContent, setImportContent] = useState('');
   
-  const [providerModels, setProviderModels] = useState<{ [key: string]: string[] }>({});
   const [expandedProviders, setExpandedProviders] = useState<{ [key: string]: boolean }>({});
   
-  const { fontSizes, setFontSize } = useUiStore();
+  const { fontSizes, setFontSize, providerModels, setProviderModels } = useUiStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,11 +126,9 @@ export function SettingsDialog({ providers, asIcon = false }: SettingsDialogProp
     window.dispatchEvent(new CustomEvent('api-keys-updated'));
   };
 
-  const loadSettings = useCallback(() => {
+  const loadApiKeys = useCallback(() => {
     const passphraseExists = Storage.hasPassphrase();
     setHasPassphrase(passphraseExists);
-    const prefs = Storage.getPreferences();
-    setProviderModels(prefs.providerModels || {});
 
     if (passphraseExists && passphrase) {
       try {
@@ -146,15 +143,17 @@ export function SettingsDialog({ providers, asIcon = false }: SettingsDialogProp
 
   useEffect(() => {
     if (isOpen) {
-      loadSettings();
+      loadApiKeys();
     }
-  }, [isOpen, loadSettings]);
+  }, [isOpen, loadApiKeys]);
 
   const saveApiKey = (provider: string, key: string) => {
-    const newKeys = { ...apiKeys, [provider]: key };
-    setApiKeys(newKeys);
-    Storage.setApiKeys(newKeys, passphrase || undefined);
-    notifyUpdates();
+    setApiKeys(prevKeys => {
+      const newKeys = { ...prevKeys, [provider]: key };
+      Storage.setApiKeys(newKeys, passphrase || undefined);
+      notifyUpdates();
+      return newKeys;
+    });
   };
 
   const removeApiKey = (provider: string) => {
@@ -183,7 +182,6 @@ export function SettingsDialog({ providers, asIcon = false }: SettingsDialogProp
       
     const newProviderModels = { ...providerModels, [providerId]: newModels };
     setProviderModels(newProviderModels);
-    Storage.setPreferences({ providerModels: newProviderModels });
   };
 
   const toggleKeyVisibility = (provider: string) => {
@@ -217,7 +215,7 @@ export function SettingsDialog({ providers, asIcon = false }: SettingsDialogProp
       setApiKeys(merged);
       Storage.setApiKeys(merged, passphrase || undefined);
       setImportContent('');
-      loadSettings();
+      loadApiKeys();
       notifyUpdates(); // Notify the app of the change
     } catch (error) {
       console.error('Import failed:', error);

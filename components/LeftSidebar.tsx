@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { useUiStore } from '@/lib/state/uiStore';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 interface LeftSidebarProps {
@@ -156,17 +157,17 @@ export function LeftSidebar({
     return (
       <div 
         className="flex flex-col h-full items-center justify-between py-4 relative bg-sidebar"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         style={{ fontSize: fontSizes.general }}
       >
         <TooltipProvider delayDuration={0}>
           <div className="flex flex-col items-center space-y-2">
-            <div 
-              className={`transition-opacity duration-200 ${isHovered || isMobile ? 'opacity-100' : 'opacity-0'}`}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -174,12 +175,12 @@ export function LeftSidebar({
                   >
                     <PanelLeftOpen className="h-5 w-5" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Open sidebar</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Open sidebar</p>
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" onClick={onNewChat}>
@@ -201,16 +202,34 @@ export function LeftSidebar({
   }
 
   return (
-    <div className="flex flex-col h-full bg-sidebar" style={{ fontSize: fontSizes.general }}>
-      <div className="p-4 space-y-3">
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="flex flex-col h-full bg-sidebar"
+      style={{ fontSize: fontSizes.general }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+        className="p-4 space-y-3"
+      >
         <div className="flex items-center justify-between">
            <h1 className="text-lg font-semibold">Chats</h1>
            <TooltipProvider delayDuration={0}>
              <Tooltip>
                <TooltipTrigger asChild>
-                 <Button variant="ghost" size="icon" onClick={onToggleCollapse}>
-                   <PanelLeftClose className="h-5 w-5" />
-                 </Button>
+                 <motion.div
+                   whileHover={{ scale: 1.1 }}
+                   whileTap={{ scale: 0.95 }}
+                   transition={{ duration: 0.2 }}
+                 >
+                   <Button variant="ghost" size="icon" onClick={onToggleCollapse}>
+                     <PanelLeftClose className="h-5 w-5" />
+                   </Button>
+                 </motion.div>
                </TooltipTrigger>
                <TooltipContent side="bottom">
                  <p>Close sidebar</p>
@@ -219,35 +238,88 @@ export function LeftSidebar({
            </TooltipProvider>
         </div>
         <NewChatButton onClick={onNewChat} />
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search chats..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 rounded-xl"
-          />
-        </div>
-      </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15, ease: 'easeOut' }}
+          className="relative"
+        >
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+          >
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </motion.div>
+          <motion.div
+            whileFocus={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Input
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-9 rounded-xl"
+            />
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {threads.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
-            <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="p-4 text-center text-muted-foreground"
+          >
+            <motion.div
+              animate={{ 
+                scale: [1, 1.05, 1],
+                opacity: [0.5, 0.7, 0.5]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+            >
+              <MessageSquare className="h-8 w-8 mx-auto mb-2" />
+            </motion.div>
             <p className="text-sm">No conversations yet</p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="p-2">
-            {orderedGroupKeys.map(groupTitle => (
-              <div key={groupTitle} className="mb-2">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="p-2"
+          >
+            {orderedGroupKeys.map((groupTitle, groupIndex) => (
+              <motion.div
+                key={groupTitle}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.25 + groupIndex * 0.05 }}
+                className="mb-2"
+              >
                 <h4 className="text-xs font-bold uppercase text-muted-foreground px-3 py-2">
                   {groupTitle}
                 </h4>
                 <div className="space-y-1">
-                  {groupedThreads[groupTitle].map((thread) => (
-                    <div
+                  {groupedThreads[groupTitle].map((thread, threadIndex) => (
+                    <motion.div
                       key={thread.id}
-                      className={`group relative rounded-xl p-3 cursor-pointer transition-colors ${
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ 
+                        duration: 0.2, 
+                        delay: 0.3 + (groupIndex * 0.05) + (threadIndex * 0.02),
+                        ease: 'easeOut'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`group relative rounded-xl p-3 cursor-pointer transition-all duration-200 ${
                         selectedThreadId === thread.id
                           ? 'bg-primary/10 border border-primary/20'
                           : 'hover:bg-muted/50'
@@ -282,42 +354,80 @@ export function LeftSidebar({
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); startEditing(thread); }}>
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Rename
+                                <DropdownMenuItem 
+                                  onClick={(e) => { e.stopPropagation(); startEditing(thread); }}
+                                  className="relative overflow-hidden"
+                                >
+                                  <motion.div
+                                    whileHover={{ x: 4 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center"
+                                  >
+                                    <Edit2 className="h-4 w-4 mr-2" />
+                                    Rename
+                                  </motion.div>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onDuplicateThread(thread.id)}>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Duplicate
+                                <DropdownMenuItem 
+                                  onClick={() => onDuplicateThread(thread.id)}
+                                  className="relative overflow-hidden"
+                                >
+                                  <motion.div
+                                    whileHover={{ x: 4 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center"
+                                  >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Duplicate
+                                  </motion.div>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onExportThread(thread.id, 'json')}>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Export JSON
+                                <DropdownMenuItem 
+                                  onClick={() => onExportThread(thread.id, 'json')}
+                                  className="relative overflow-hidden"
+                                >
+                                  <motion.div
+                                    whileHover={{ x: 4 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center"
+                                  >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Export JSON
+                                  </motion.div>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => onDeleteThread(thread.id)}
-                                  className="text-destructive focus:text-destructive"
+                                  className="text-destructive focus:text-destructive relative overflow-hidden"
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
+                                  <motion.div
+                                    whileHover={{ x: 4 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </motion.div>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
                         </>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 
-      <div className="p-4 border-t">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.3, ease: 'easeOut' }}
+        className="p-4 border-t"
+      >
         <SettingsDialog providers={providers} />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
